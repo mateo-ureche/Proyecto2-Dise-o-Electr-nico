@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+        }
+        .contenedor {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+        }
+        .encabezado { text-align: center; margin-bottom: 20px; }
+        .encabezado h1 { margin: 0; font-size: 28px; }
+        .encabezado p { margin-top: 8px; color: #64748b; }
+        .datos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .campo {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .etiqueta {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .valor { font-size: 18px; font-weight: bold; color: #0f172a; }
+        #mapa {
+            width: 100%;
+            height: 400px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+        .estado {
+            text-align: center;
+            margin-top: 18px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .punto {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <div class="encabezado">
+            <h1>📍 GPS Tracker</h1>
+            <p>Ubicación en tiempo real del vehículo</p>
+        </div>
+
+        <div class="datos">
+            <div class="campo">
+                <span class="etiqueta">LATITUD</span>
+                <span class="valor" id="latitud">---</span>
+            </div>
+            <div class="campo">
+                <span class="etiqueta">LONGITUD</span>
+                <span class="valor" id="longitud">---</span>
+            </div>
+            <div class="campo">
+                <span class="etiqueta">FECHA</span>
+                <span class="valor" id="fecha">---</span>
+            </div>
+            <div class="campo">
+                <span class="etiqueta">HORA</span>
+                <span class="valor" id="hora">---</span>
+            </div>
+        </div>
+
+        <div id="mapa"></div>
+
+        <div class="estado">
+            <span class="punto"></span>
+            Actualización automática cada 10 segundos
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let mapa = L.map('mapa').setView([10.9878, -74.7889], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapa);
+
+        let marcador = L.marker([10.9878, -74.7889]).addTo(mapa);
+
+        function actualizarUbicacion() {
+            fetch("/api/ubicacion")
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    document.getElementById("latitud").textContent = datos.latitud ?? "---";
+                    document.getElementById("longitud").textContent = datos.longitud ?? "---";
+                    document.getElementById("fecha").textContent = datos.fecha ?? "---";
+                    document.getElementById("hora").textContent = datos.hora ?? "---";
+
+                    if (datos.latitud && datos.longitud) {
+                        const nuevaPos = [datos.latitud, datos.longitud];
+                        marcador.setLatLng(nuevaPos);
+                        mapa.setView(nuevaPos);
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        }
+
+        actualizarUbicacion();
+        setInterval(actualizarUbicacion, 10000);
+    </script>
+</body>
+</html>
