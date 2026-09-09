@@ -1,11 +1,13 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, render_template
 from dotenv import load_dotenv
 import psycopg2
 import os
 
 load_dotenv()
 
-app = Flask(__name__, static_folder="web", static_url_path="")
+app = Flask(__name__)
+
+PROPIETARIO = os.environ.get("DOMINIO", "desconocido")
 
 DB_CONFIG = dict(
     host=os.environ["DB_HOST"],
@@ -18,7 +20,7 @@ DB_CONFIG = dict(
 
 @app.route("/")
 def index():
-    return send_from_directory("web", "index.html")
+    return render_template("index.html", dominio=os.environ.get("DOMINIO", ""))
 
 @app.route("/api/ubicacion")
 def ubicacion():
@@ -27,9 +29,10 @@ def ubicacion():
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
+        WHERE propietario = %s
         ORDER BY id DESC
         LIMIT 1
-    """)
+    """, (PROPIETARIO,))
     resultado = cursor.fetchone()
     cursor.close()
     conexion.close()

@@ -7,6 +7,7 @@ load_dotenv()
 
 IP = "0.0.0.0"
 PUERTO = 5000
+PROPIETARIO = os.environ.get("DOMINIO", "desconocido")
 
 DB_CONFIG = dict(
     host=os.environ["DB_HOST"],
@@ -20,7 +21,7 @@ DB_CONFIG = dict(
 socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 socket_udp.bind((IP, PUERTO))
 
-print(f"Servidor UDP escuchando en el puerto {PUERTO}...")
+print(f"Servidor UDP escuchando en el puerto {PUERTO}... (propietario: {PROPIETARIO})")
 
 while True:
     datos, direccion = socket_udp.recvfrom(1024)
@@ -37,9 +38,9 @@ while True:
         conexion = psycopg2.connect(**DB_CONFIG)
         cursor = conexion.cursor()
         cursor.execute("""
-            INSERT INTO ubicaciones (latitud, longitud, fecha, hora)
-            VALUES (%s, %s, %s, %s)
-        """, (float(latitud), float(longitud), fecha, hora))
+            INSERT INTO ubicaciones (latitud, longitud, fecha, hora, propietario)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (float(latitud), float(longitud), fecha, hora, PROPIETARIO))
         conexion.commit()
         cursor.close()
         conexion.close()
