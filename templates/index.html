@@ -107,21 +107,40 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(mapa);
 
+        // ¡NUEVO!: Añadimos la polilínea azul vacía al mapa
+        let polilinea = L.polyline([], {color: 'blue', weight: 4}).addTo(mapa);
         let marcador = L.marker([10.9878, -74.7889]).addTo(mapa);
 
         function actualizarUbicacion() {
             fetch("/api/ubicacion")
                 .then(respuesta => respuesta.json())
                 .then(datos => {
-                    document.getElementById("latitud").textContent = datos.latitud ?? "---";
-                    document.getElementById("longitud").textContent = datos.longitud ?? "---";
-                    document.getElementById("fecha").textContent = datos.fecha ?? "---";
-                    document.getElementById("hora").textContent = datos.hora ?? "---";
+                    // Ahora 'datos' es una lista, así que verificamos que tenga elementos
+                    if (datos && datos.length > 0) {
+                        
+                        // 1. Extraemos el último punto de la lista (el más reciente)
+                        let ultimoPunto = datos[datos.length - 1];
 
-                    if (datos.latitud && datos.longitud) {
-                        const nuevaPos = [datos.latitud, datos.longitud];
-                        marcador.setLatLng(nuevaPos);
-                        mapa.setView(nuevaPos);
+                        // 2. Actualizamos los textos en la página con el último punto
+                        document.getElementById("latitud").textContent = ultimoPunto.latitud ?? "---";
+                        document.getElementById("longitud").textContent = ultimoPunto.longitud ?? "---";
+                        document.getElementById("fecha").textContent = ultimoPunto.fecha ?? "---";
+                        document.getElementById("hora").textContent = ultimoPunto.hora ?? "---";
+
+                        // 3. Verificamos que tenga coordenadas válidas
+                        if (ultimoPunto.latitud && ultimoPunto.longitud) {
+                            
+                            // Transformamos toda la lista de datos en una lista de coordenadas [lat, lon]
+                            let coordenadasRuta = datos.map(p => [p.latitud, p.longitud]);
+                            
+                            // Trazamos la línea azul en el mapa
+                            polilinea.setLatLngs(coordenadasRuta);
+                            
+                            // Movemos el pin y centramos la cámara al punto más nuevo
+                            const nuevaPos = [ultimoPunto.latitud, ultimoPunto.longitud];
+                            marcador.setLatLng(nuevaPos);
+                            mapa.setView(nuevaPos);
+                        }
                     }
                 })
                 .catch(error => console.error("Error:", error));
