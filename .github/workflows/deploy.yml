@@ -1,0 +1,21 @@
+name: Despliegue a AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conectando al servidor y actualizando
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_KEY }}
+          script: |
+            cd /home/ubuntu/Proyecto2-Dise-o-Electr-nico
+            ./actualizar.sh
+            
