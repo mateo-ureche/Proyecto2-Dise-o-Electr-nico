@@ -26,28 +26,33 @@ def index():
 def ubicacion():
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
+    
+    # CAMBIO 1: Pedimos los últimos 50 registros en lugar de 1
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
         WHERE propietario = %s
         ORDER BY id DESC
-        LIMIT 1
+        LIMIT 50
     """, (PROPIETARIO,))
-    resultado = cursor.fetchone()
+    
+    resultados = cursor.fetchall()
     cursor.close()
     conexion.close()
 
-    if resultado:
-        respuesta = {
-            "latitud": resultado[0],
-            "longitud": resultado[1],
-            "fecha": resultado[2],
-            "hora": resultado[3]
-        }
-    else:
-        respuesta = {"latitud": None, "longitud": None, "fecha": None, "hora": None}
+    # CAMBIO 2: Guardamos todos los puntos en una lista (invertida para dibujar la ruta en orden)
+    historial = []
+    if resultados:
+        for fila in reversed(resultados):
+            historial.append({
+                "latitud": fila[0],
+                "longitud": fila[1],
+                "fecha": fila[2],
+                "hora": fila[3]
+            })
 
-    return jsonify(respuesta)
+    # Ahora enviamos la lista completa al frontend
+    return jsonify(historial)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
