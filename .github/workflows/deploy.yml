@@ -16,6 +16,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.AWS_KEY }}
           script: |
-            cd /home/ubuntu/Proyecto2-Dise-o-Electr-nico
+            cd /home/ubuntu/proyecto2
             ./actualizar.sh
-            
