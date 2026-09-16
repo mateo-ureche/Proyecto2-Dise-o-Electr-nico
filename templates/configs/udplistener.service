@@ -1,0 +1,13 @@
+ubuntu@ip-172-31-15-133:~$ sudo cat /etc/systemd/system/udplistener.service
+[Unit]
+Description=UDP Listener - Proyecto 2
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/proyecto2
+ExecStart=/home/ubuntu/proyecto2/venv/bin/python3 udp_listener.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
