@@ -162,7 +162,8 @@
             idPeticionActual++;
             const miId = idPeticionActual;
             const coords = rutaParaOSRM.map(p => p[1] + "," + p[0]).join(";");
-            const url = "https://router.project-osrm.org/match/v1/driving/" + coords + "?geometries=geojson&overview=full";
+            const radios = rutaParaOSRM.map(() => "25").join(";");
+            const url = "https://router.project-osrm.org/match/v1/driving/" + coords + "?geometries=geojson&overview=full&radiuses=" + radios;
 
             fetch(url)
                 .then(r => r.json())
