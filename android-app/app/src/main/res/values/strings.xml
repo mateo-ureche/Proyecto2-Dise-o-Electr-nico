@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">GPSTracker</string>
+    <string name="network_sending">Enviando ubicación por red…</string>
+    <string name="network_sent">Enviado (%1$s):\nLat: %2$.6f\nLon: %3$.6f\n\n%4$s</string>
+    <string name="permissions_required">Se requieren permisos</string>
+    <string name="location_error">Error al obtener ubicación</string>
+    <string name="ip_casa_1_hint">IP casa 1 (ej: 100.64.0.1)</string>
+    <string name="ip_casa_2_hint">IP casa 2 (ej: 100.64.0.2)</string>
+    <string name="ip_casa_3_hint">IP casa 3 (ej: 100.64.0.3)</string>
+    <string name="enviar_ubicacion">Enviar ubicación por red</string>
+    <string name="ip_vacia">Escribe al menos una IP</string>
+    <string name="enviar_ahora_debug">🔧 Enviar ahora (debug)</string>
+    <string name="servicio_activo">Servicio activo, enviando en segundo plano</string>
+</resources>
