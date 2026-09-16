@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 import psycopg2
 import os
 
@@ -26,33 +27,54 @@ def index():
 def ubicacion():
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
-    
-    # CAMBIO 1: Pedimos los últimos 50 registros en lugar de 1
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
         WHERE propietario = %s
         ORDER BY id DESC
-        LIMIT 50
+        LIMIT 1
     """, (PROPIETARIO,))
-    
-    resultados = cursor.fetchall()
+    resultado = cursor.fetchone()
     cursor.close()
     conexion.close()
 
-    # CAMBIO 2: Guardamos todos los puntos en una lista (invertida para dibujar la ruta en orden)
-    historial = []
-    if resultados:
-        for fila in reversed(resultados):
-            historial.append({
-                "latitud": fila[0],
-                "longitud": fila[1],
-                "fecha": fila[2],
-                "hora": fila[3]
-            })
+    if resultado:
+        respuesta = {
+            "latitud": resultado[0],
+            "longitud": resultado[1],
+            "fecha": resultado[2],
+            "hora": resultado[3]
+        }
+    else:
+        respuesta = {"latitud": None, "longitud": None, "fecha": None, "hora": None}
 
-    # Ahora enviamos la lista completa al frontend
-    return jsonify(historial)
+    return jsonify(respuesta)
+
+@app.route("/api/recorrido")
+def recorrido():
+    hoy = (datetime.utcnow() - timedelta(hours=5)).strftime("%d/%m/%Y")
+    conexion = psycopg2.connect(**DB_CONFIG)
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT latitud, longitud, fecha, hora
+        FROM (
+            SELECT latitud, longitud, fecha, hora, id
+            FROM ubicaciones
+            WHERE propietario = %s AND fecha = %s
+            ORDER BY id DESC
+            LIMIT 500
+        ) sub
+        ORDER BY id ASC
+    """, (PROPIETARIO, hoy))
+    filas = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    puntos = [
+        {"latitud": f[0], "longitud": f[1], "fecha": f[2], "hora": f[3]}
+        for f in filas
+    ]
+    return jsonify(puntos)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
