@@ -5,13 +5,11 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  deploy-mateo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # 1. Despliegue al servidor de Mateo
       - name: Deploy to Mateo AWS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -23,7 +21,11 @@ jobs:
             git pull origin main
             ./actualizar.sh
 
-      # 2. Despliegue al servidor de Naeem
+  deploy-naeem:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Deploy to Naeem AWS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -35,7 +37,11 @@ jobs:
             git pull origin main
             ./actualizar.sh
 
-      # 3. Despliegue al servidor de Diana
+  deploy-diana:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Deploy to Diana AWS
         uses: appleboy/ssh-action@v1.0.3
         with:
