@@ -1,15 +1,18 @@
-name: Despliegue a AWS EC2
+name: Deploy to Multiple AWS EC2
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Conectando al servidor y actualizando
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 1. Despliegue al servidor de Mateo
+      - name: Deploy to Mateo AWS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.AWS_HOST }}
@@ -17,4 +20,29 @@ jobs:
           key: ${{ secrets.AWS_KEY }}
           script: |
             cd /home/ubuntu/proyecto2
+            git pull origin main
+            ./actualizar.sh
+
+      # 2. Despliegue al servidor de Naeem
+      - name: Deploy to Naeem AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST_NAEEM }}
+          username: ubuntu
+          key: ${{ secrets.AWS_KEY_NAEEM }}
+          script: |
+            cd /home/ubuntu/proyecto2
+            git pull origin main
+            ./actualizar.sh
+
+      # 3. Despliegue al servidor de Diana
+      - name: Deploy to Diana AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST_DIANA }}
+          username: ubuntu
+          key: ${{ secrets.AWS_KEY_DIANA }}
+          script: |
+            cd /home/ubuntu/proyecto2
+            git pull origin main
             ./actualizar.sh
