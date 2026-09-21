@@ -215,6 +215,36 @@
             return ruta;
         }
 
+        function construirRutaHistorica(puntosCrudos) {
+            const puntosUnicos = [];
+            for (const p of puntosCrudos) {
+                const lat = Math.round(p.latitud * 10000) / 10000;
+                const lon = Math.round(p.longitud * 10000) / 10000;
+                const nuevoPunto = [lat, lon];
+                const anterior = puntosUnicos[puntosUnicos.length - 1];
+                if (!anterior || anterior[0] !== nuevoPunto[0] || anterior[1] !== nuevoPunto[1]) {
+                    puntosUnicos.push(nuevoPunto);
+                }
+            }
+
+            const segmentos = [[]];
+            for (const p of puntosUnicos) {
+                const segmentoActual = segmentos[segmentos.length - 1];
+                const anterior = segmentoActual[segmentoActual.length - 1];
+                if (anterior && distanciaMetrosAprox(anterior, p) >= 500) {
+                    segmentos.push([p]);
+                } else {
+                    segmentoActual.push(p);
+                }
+            }
+
+            let mejorSegmento = segmentos[0];
+            for (const seg of segmentos) {
+                if (seg.length > mejorSegmento.length) mejorSegmento = seg;
+            }
+            return mejorSegmento;
+        }
+
         function dibujarRuta(ruta) {
             lineaRecorrido.setLatLngs(ruta);
         }
@@ -271,7 +301,7 @@
                         return;
                     }
 
-                    const ruta = construirRutaFiltrada(puntosCrudos);
+                    const ruta = construirRutaHistorica(puntosCrudos);
 
                     if (ruta.length === 0) {
                         alert("No hay datos guardados en ese rango de fechas.");
