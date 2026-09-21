@@ -69,58 +69,46 @@
             border-radius: 50%;
             margin-right: 6px;
         }
-        .selector-modo {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-            flex-shrink: 0;
-        }
-        .modo-btn {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: bold;
-            color: #64748b;
-        }
-        .modo-btn.activo {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
         .controles-historico {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
-            align-items: flex-end;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 10px;
             flex-shrink: 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px;
         }
-        .campo-historico {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .campo-historico label {
-            font-size: 11px;
+        .controles-historico label {
+            font-size: 12px;
             color: #64748b;
-            margin-bottom: 2px;
+            font-weight: bold;
         }
-        .campo-historico input, #btnBuscar {
-            padding: 6px;
+        .controles-historico input[type="datetime-local"] {
+            font-size: 13px;
+            padding: 4px 6px;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 13px;
         }
-        #btnBuscar {
+        .btn {
+            font-size: 13px;
+            font-weight: bold;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-historico {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-tiempo-real {
             background: #2563eb;
             color: white;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 8px 16px;
+            display: none;
         }
         #mapa {
             flex: 1;
@@ -134,7 +122,7 @@
 <body>
     <div class="contenedor">
         <div class="encabezado">
-            <h1> 📍 GPS Tracker </h1>
+            <h1>📍 GPS Tracker</h1>
             <p>Ubicación en tiempo real del vehículo</p>
             <p style="font-size: 12px; color: #94a3b8;">{{ dominio }}</p>
         </div>
@@ -158,26 +146,18 @@
             </div>
         </div>
 
+        <div class="controles-historico">
+            <label>Desde:</label>
+            <input type="datetime-local" id="fechaInicio">
+            <label>Hasta:</label>
+            <input type="datetime-local" id="fechaFin">
+            <button class="btn btn-historico" onclick="verHistorico()">Ver recorrido histórico</button>
+            <button class="btn btn-tiempo-real" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
+        </div>
+
         <div class="estado">
             <span class="punto"></span>
             Actualización automática cada 10 segundos
-        </div>
-
-        <div class="selector-modo">
-            <button id="btnEnVivo" class="modo-btn activo" onclick="cambiarModo('vivo')">En vivo</button>
-            <button id="btnHistorico" class="modo-btn" onclick="cambiarModo('historico')">Histórico</button>
-        </div>
-
-        <div id="controlesHistorico" class="controles-historico" style="display:none;">
-            <div class="campo-historico">
-                <label for="desde">Desde</label>
-                <input type="datetime-local" id="desde">
-            </div>
-            <div class="campo-historico">
-                <label for="hasta">Hasta</label>
-                <input type="datetime-local" id="hasta">
-            </div>
-            <button id="btnBuscar" onclick="buscarHistorico()">Buscar</button>
         </div>
 
         <div id="mapa"></div>
@@ -192,7 +172,9 @@
 
         let marcador = L.marker([10.9878, -74.7889]).addTo(mapa);
         let lineaRecorrido = L.polyline([], { color: '#2563eb', weight: 4 }).addTo(mapa);
+        let lineaHistorica = L.polyline([], { color: '#dc2626', weight: 4, dashArray: '8, 6' });
         let primeraCarga = true;
+        let modoHistorico = false;
 
         function distanciaMetrosAprox(p1, p2) {
             const dLat = (p2[0] - p1[0]) * 111000;
@@ -238,6 +220,7 @@
         }
 
         function actualizarRecorrido() {
+            if (modoHistorico) return;
             fetch("/api/recorrido")
                 .then(r => r.json())
                 .then(puntosCrudos => {
@@ -253,6 +236,7 @@
         }
 
         function actualizarUbicacion() {
+            if (modoHistorico) return;
             fetch("/api/ubicacion")
                 .then(respuesta => respuesta.json())
                 .then(datos => {
@@ -270,60 +254,55 @@
                 .catch(error => console.error("Error:", error));
         }
 
-        let intervaloUbicacion = null;
-        let intervaloRecorrido = null;
+        function verHistorico() {
+            const inicio = document.getElementById("fechaInicio").value;
+            const fin = document.getElementById("fechaFin").value;
 
-        function iniciarModoVivo() {
-            actualizarUbicacion();
-            actualizarRecorrido();
-            intervaloUbicacion = setInterval(actualizarUbicacion, 10000);
-            intervaloRecorrido = setInterval(actualizarRecorrido, 10000);
-        }
-
-        function detenerModoVivo() {
-            clearInterval(intervaloUbicacion);
-            clearInterval(intervaloRecorrido);
-        }
-
-        function cambiarModo(modo) {
-            document.getElementById("btnEnVivo").classList.toggle("activo", modo === "vivo");
-            document.getElementById("btnHistorico").classList.toggle("activo", modo === "historico");
-            document.getElementById("controlesHistorico").style.display = modo === "historico" ? "flex" : "none";
-
-            if (modo === "vivo") {
-                lineaRecorrido.setLatLngs([]);
-                primeraCarga = true;
-                iniciarModoVivo();
-            } else {
-                detenerModoVivo();
-            }
-        }
-
-        function buscarHistorico() {
-            const desde = document.getElementById("desde").value;
-            const hasta = document.getElementById("hasta").value;
-
-            if (!desde || !hasta) {
-                alert("Selecciona la fecha y hora de inicio y de fin.");
+            if (!inicio || !fin) {
+                alert("Selecciona una fecha de inicio y una de fin.");
                 return;
             }
 
-            fetch(`/api/historico?desde=${desde}&hasta=${hasta}`)
+            fetch("/api/historico?inicio=" + encodeURIComponent(inicio) + "&fin=" + encodeURIComponent(fin))
                 .then(r => r.json())
                 .then(puntosCrudos => {
-                    const ruta = construirRutaFiltrada(puntosCrudos);
-                    dibujarRuta(ruta);
-
-                    if (ruta.length > 0) {
-                        mapa.fitBounds(lineaRecorrido.getBounds());
-                    } else {
-                        alert("No hay datos de ubicación en ese rango de tiempo.");
+                    if (puntosCrudos.error) {
+                        alert(puntosCrudos.error);
+                        return;
                     }
+
+                    const ruta = construirRutaFiltrada(puntosCrudos);
+
+                    if (ruta.length === 0) {
+                        alert("No hay datos guardados en ese rango de fechas.");
+                        return;
+                    }
+
+                    modoHistorico = true;
+                    mapa.removeLayer(lineaRecorrido);
+                    mapa.removeLayer(marcador);
+                    lineaHistorica.setLatLngs(ruta);
+                    lineaHistorica.addTo(mapa);
+                    mapa.fitBounds(lineaHistorica.getBounds());
+                    document.getElementById("btnTiempoReal").style.display = "inline-block";
                 })
-                .catch(error => console.error("Error cargando histórico:", error));
+                .catch(error => console.error("Error cargando historico:", error));
         }
 
-        iniciarModoVivo();
+        function volverTiempoReal() {
+            modoHistorico = false;
+            mapa.removeLayer(lineaHistorica);
+            lineaRecorrido.addTo(mapa);
+            marcador.addTo(mapa);
+            document.getElementById("btnTiempoReal").style.display = "none";
+            actualizarUbicacion();
+            actualizarRecorrido();
+        }
+
+        actualizarUbicacion();
+        actualizarRecorrido();
+        setInterval(actualizarUbicacion, 10000);
+        setInterval(actualizarRecorrido, 10000);
     </script>
 </body>
 </html>
