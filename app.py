@@ -78,17 +78,14 @@ def recorrido():
 
 @app.route("/api/historico")
 def historico():
-    desde = request.args.get("desde")  # ej: "2026-09-15T14:00"
-    hasta = request.args.get("hasta")  # ej: "2026-09-15T16:00"
+    inicio = request.args.get("inicio")
+    fin = request.args.get("fin")
 
-    if not desde or not hasta:
-        return jsonify({"error": "Faltan los parámetros 'desde' y 'hasta'"}), 400
+    if not inicio or not fin:
+        return jsonify({"error": "Debes especificar inicio y fin"}), 400
 
-    try:
-        desde_dt = datetime.strptime(desde, "%Y-%m-%dT%H:%M")
-        hasta_dt = datetime.strptime(hasta, "%Y-%m-%dT%H:%M")
-    except ValueError:
-        return jsonify({"error": "Formato de fecha inválido"}), 400
+    inicio_sql = inicio.replace("T", " ") + ":00"
+    fin_sql = fin.replace("T", " ") + ":00"
 
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
@@ -96,10 +93,10 @@ def historico():
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
         WHERE propietario = %s
-          AND to_timestamp(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS') BETWEEN %s AND %s
+        AND TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS')
+            BETWEEN %s::timestamp AND %s::timestamp
         ORDER BY id ASC
-        LIMIT 5000
-    """, (PROPIETARIO, desde_dt, hasta_dt))
+    """, (PROPIETARIO, inicio_sql, fin_sql))
     filas = cursor.fetchall()
     cursor.close()
     conexion.close()
