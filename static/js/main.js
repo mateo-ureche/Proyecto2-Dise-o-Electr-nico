@@ -5,6 +5,8 @@ const configPicker = {
     dateFormat: "Y-m-dTH:i",
     altInput: true,
     altFormat: "d/m/Y H:i"
+    maxDate: new Date()
+
 };
 flatpickr("#fechaInicio", configPicker);
 flatpickr("#fechaFin", configPicker);
