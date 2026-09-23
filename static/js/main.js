@@ -4,7 +4,7 @@ const configPicker = {
     time_24hr: true,
     dateFormat: "Y-m-dTH:i",
     altInput: true,
-    altFormat: "d/m/Y H:i"
+    altFormat: "d/m/Y H:i",
     maxDate: new Date()
 
 };
