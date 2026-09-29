@@ -194,6 +194,32 @@ label {
     color: white;
     display: none;
 }
+.lista-recorridos {
+    margin-top: 12px;
+}
+.lista-titulo {
+    font-size: 11px;
+    color: #ffe4e9;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+.item-recorrido {
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.12);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+.item-recorrido.activo {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    font-weight: bold;
+}
 .flatpickr-day.selected {
     background: #AF043C;
     border-color: #AF043C;

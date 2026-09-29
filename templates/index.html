@@ -10,24 +10,24 @@
 </head>
 <body>
     <div id="mapa"></div>
-
+ 
     <div class="titulo-flotante" id="tituloFlotante">
         📍 GPS Tracker
         <span class="dominio-badge">{{ dominio }}</span>
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
     </div>
-
+ 
     <button class="toggle-btn" id="botonToggle" onclick="toggleSidebar()">☰</button>
-
+ 
     <div class="sidebar" id="sidebar">
         <div class="titulo-sidebar">📍 GPS Tracker</div>
         <span class="dominio-badge-sidebar">{{ dominio }}</span>
-
+ 
         <div class="estado-vivo">
             <span class="punto"></span>
             Actualización cada 10 segundos
         </div>
-
+ 
         <div class="seccion">
             <div class="seccion-titulo">Ubicación actual</div>
             <div class="datos-grid">
@@ -49,7 +49,7 @@
                 </div>
             </div>
         </div>
-
+ 
         <div class="seccion">
             <div class="seccion-titulo">🗓️ Recorrido histórico</div>
             <label>Desde</label>
@@ -58,9 +58,10 @@
             <input type="text" class="campo-fecha" id="fechaFin" placeholder="Selecciona fecha y hora">
             <button class="btn btn-ver" onclick="verHistorico()">Ver recorrido</button>
             <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
+            <div class="lista-recorridos" id="listaRecorridos"></div>
         </div>
     </div>
-
+ 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.js"></script>
