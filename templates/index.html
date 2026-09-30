@@ -17,6 +17,8 @@
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
     </div>
  
+    <div class="aviso-lugar" id="avisoLugar">Toca una calle del mapa</div>
+ 
     <button class="toggle-btn" id="botonToggle" onclick="toggleSidebar()">☰</button>
  
     <div class="sidebar" id="sidebar">
@@ -62,18 +64,14 @@
         </div>
  
         <div class="seccion">
-            <div class="seccion-titulo">📌 ¿Cuándo pasó?</div>
+            <div class="seccion-titulo">📍 ¿Cuándo pasó?</div>
             <div class="fila-busqueda">
                 <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Buscar dirección"
                        onkeydown="if (event.key === 'Enter') buscarDireccion()">
                 <button class="btn-lupa" onclick="buscarDireccion()">🔍</button>
             </div>
             <div class="lista-recorridos" id="resultadosDireccion"></div>
-            <button class="btn btn-ver" onclick="ponerPinEnCentro()">📌 Poner pin</button>
-            <div id="controlesLugar" style="display: none;">
-                <div class="lista-recorridos" id="listaPasadas"></div>
-                <button class="btn btn-quitar" onclick="quitarLugar()">Quitar pin</button>
-            </div>
+            <button class="btn btn-ver" id="btnCuandoPaso" onclick="activarModoLugar()">📍 Marcar en el mapa</button>
         </div>
     </div>
  

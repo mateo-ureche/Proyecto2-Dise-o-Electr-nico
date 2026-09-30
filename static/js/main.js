@@ -42,7 +42,7 @@ let primeraCarga = true;
 let modoHistorico = false;
 let recorridosHistoricos = [];
 let recorridoActivo = -1;
-
+ 
 // Línea invisible y más gruesa encima de la histórica para que sea fácil tocarla en el celular
 let lineaHistoricaToque = L.polyline([], { color: '#7c3aed', weight: 22, opacity: 0.01 });
 let lineaRecorridoToque = L.polyline([], { color: '#2563eb', weight: 22, opacity: 0.01 }).addTo(mapa);
@@ -50,19 +50,20 @@ let recorridoHoy = { puntos: [], detalle: [] };
 let popupAbierto = false;
 mapa.on("popupopen", () => { popupAbierto = true; });
 mapa.on("popupclose", () => { popupAbierto = false; });
-
+ 
 const iconoLugar = L.divIcon({
-    html: '<div style="font-size:30px;">📌</div>',
+    html: '<div style="font-size:30px;">📍</div>',
     className: '',
     iconSize: [30, 30],
-    iconAnchor: [8, 28]
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -28]
 });
 let marcadorLugar = L.marker([0, 0], { icon: iconoLugar, draggable: true, zIndexOffset: 1000 });
 // El GPS nunca cae exactamente en el mismo punto: se cuenta como "pasó por aquí" si estuvo a menos de esta distancia
 const TOLERANCIA_METROS = 30;
-let capaPasada = L.layerGroup();
+// Si el punto tocado está a más de esta distancia de una calle, no se pone el marcador
+const MAXIMO_FUERA_DE_CALLE = 60;
 let modoLugar = false;
-let pasadasEncontradas = [];
  
 function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
@@ -345,20 +346,20 @@ function volverTiempoReal() {
 // ================================================================
 // ¿Cuándo pasó el vehículo por determinado lugar?
 // ================================================================
-
+ 
 function escaparHtml(texto) {
     const div = document.createElement("div");
     div.textContent = texto ?? "";
     return div.innerHTML;
 }
-
+ 
 function rangoSeleccionado() {
     const inicio = document.getElementById("fechaInicio").value;
     const fin = document.getElementById("fechaFin").value;
     if (inicio && fin) return { inicio, fin };
     return null;
 }
-
+ 
 function urlPasadas(lat, lon, radio, usarRango = true) {
     let url = "/api/pasadas?lat=" + lat + "&lon=" + lon + "&radio=" + radio;
     const rango = usarRango ? rangoSeleccionado() : null;
@@ -367,11 +368,11 @@ function urlPasadas(lat, lon, radio, usarRango = true) {
     }
     return url;
 }
-
+ 
 function fechaCorta(fecha) {
     return fecha.slice(0, 5);
 }
-
+ 
 function textoPasada(p) {
     const entrada = p.entrada.hora.slice(0, 5);
     const salida = p.salida.hora.slice(0, 5);
@@ -382,122 +383,90 @@ function textoPasada(p) {
     }
     return dia + " " + entrada + " – " + fechaCorta(p.salida.fecha) + " " + salida;
 }
-
-// ---------- E. Pin arrastrable ----------
-
-function colocarLugar(latlng, zoom) {
-    modoLugar = true;
-    marcadorLugar.setLatLng(latlng).addTo(mapa);
-    document.getElementById("controlesLugar").style.display = "block";
-    if (zoom) {
-        mapa.setView(latlng, Math.max(mapa.getZoom(), 16));
+ 
+function htmlVeces(pasadas) {
+    const n = pasadas.length;
+    if (n === 0) return "No ha pasado por aquí";
+    let html = "Pasó " + (n === 1 ? "1 vez" : n + " veces") + " por aquí";
+    html += '<details class="veces-popup"><summary>Ver cuándo</summary><ul>';
+    pasadas.forEach(p => {
+        html += "<li>" + escaparHtml(textoPasada(p)) + "</li>";
+    });
+    return html + "</ul></details>";
+}
+ 
+// ---------- Marcador en una calle ----------
+ 
+function activarModoLugar() {
+    if (modoLugar) {
+        terminarModoLugar();
+        return;
     }
-    buscarPasadas();
+    modoLugar = true;
+    document.getElementById("btnCuandoPaso").textContent = "✖ Terminar";
+    document.getElementById("avisoLugar").style.display = "block";
+    document.getElementById("mapa").classList.add("modo-lugar");
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar.classList.contains("abierta")) toggleSidebar();
 }
-
-function ponerPinEnCentro() {
-    colocarLugar(mapa.getCenter(), false);
-}
-
-function quitarLugar() {
+ 
+function terminarModoLugar() {
     modoLugar = false;
     mapa.removeLayer(marcadorLugar);
-    capaPasada.clearLayers();
-    mapa.removeLayer(capaPasada);
-    pasadasEncontradas = [];
-    document.getElementById("controlesLugar").style.display = "none";
-    document.getElementById("listaPasadas").innerHTML = "";
+    mapa.closePopup();
+    document.getElementById("btnCuandoPaso").textContent = "📍 Marcar en el mapa";
+    document.getElementById("avisoLugar").style.display = "none";
+    document.getElementById("mapa").classList.remove("modo-lugar");
     document.getElementById("resultadosDireccion").innerHTML = "";
 }
-
-marcadorLugar.on("dragend", () => buscarPasadas());
-
-mapa.on("click", e => {
-    if (!modoLugar) return;
-    marcadorLugar.setLatLng(e.latlng);
-    buscarPasadas();
-});
-
-function buscarPasadas() {
-    const centro = marcadorLugar.getLatLng();
-    const lista = document.getElementById("listaPasadas");
-    lista.innerHTML = '<div class="lista-titulo">…</div>';
-    capaPasada.clearLayers();
-
-    fetch(urlPasadas(centro.lat.toFixed(6), centro.lng.toFixed(6), TOLERANCIA_METROS))
+ 
+// Usa OSRM (OpenStreetMap) para mover el punto tocado a la calle más cercana
+function ajustarACalle(latlng) {
+    const url = "https://router.project-osrm.org/nearest/v1/driving/" +
+        latlng.lng.toFixed(6) + "," + latlng.lat.toFixed(6) + "?number=1";
+    return fetch(url)
         .then(r => r.json())
         .then(datos => {
-            if (datos.error) {
-                lista.innerHTML = '<div class="lista-titulo">' + escaparHtml(datos.error) + '</div>';
-                return;
-            }
-            pasadasEncontradas = datos.pasadas;
-            mostrarListaPasadas();
+            if (datos.code !== "Ok" || datos.waypoints.length === 0) return null;
+            const w = datos.waypoints[0];
+            return { latlng: L.latLng(w.location[1], w.location[0]), distancia: w.distance, calle: w.name };
         })
-        .catch(error => {
-            console.error("Error buscando pasadas:", error);
-            lista.innerHTML = '<div class="lista-titulo">Error del servidor</div>';
-        });
+        // Si el servicio no responde, se usa el punto tal cual se tocó
+        .catch(() => ({ latlng: latlng, distancia: 0, calle: "" }));
 }
-
-function mostrarListaPasadas() {
-    const lista = document.getElementById("listaPasadas");
-    lista.innerHTML = "";
-
-    const titulo = document.createElement("div");
-    titulo.className = "lista-titulo";
-    const n = pasadasEncontradas.length;
-    titulo.textContent = n === 0 ? "No ha pasado por aquí" : n === 1 ? "Pasó 1 vez por aquí" : "Pasó " + n + " veces por aquí";
-    lista.appendChild(titulo);
-    if (n === 0) return;
-
-    // Las veces quedan ocultas hasta que el usuario pida verlas
-    const veces = document.createElement("div");
-    veces.style.display = "none";
-    pasadasEncontradas.forEach((p, i) => {
-        const boton = document.createElement("button");
-        boton.className = "item-recorrido item-pasada";
-        boton.textContent = textoPasada(p);
-        boton.onclick = () => mostrarPasada(i);
-        veces.appendChild(boton);
-    });
-
-    const botonVer = document.createElement("button");
-    botonVer.className = "btn btn-ver-cuando";
-    botonVer.textContent = "Ver cuándo ▾";
-    botonVer.onclick = () => {
-        const oculto = veces.style.display === "none";
-        veces.style.display = oculto ? "block" : "none";
-        botonVer.textContent = oculto ? "Ocultar ▴" : "Ver cuándo ▾";
-    };
-    lista.appendChild(botonVer);
-    lista.appendChild(veces);
-}
-
-function mostrarPasada(indice) {
-    const p = pasadasEncontradas[indice];
-    capaPasada.clearLayers();
-    p.puntos.forEach(punto => {
-        L.circleMarker([punto.latitud, punto.longitud], {
-            radius: 5, color: '#ffffff', weight: 1, fillColor: '#AF043C', fillOpacity: 0.9
-        })
-            .bindTooltip(punto.fecha + " " + punto.hora)
-            .addTo(capaPasada);
-    });
-    capaPasada.addTo(mapa);
-
-    L.popup()
-        .setLatLng([p.puntos[0].latitud, p.puntos[0].longitud])
-        .setContent("<b>" + escaparHtml(textoPasada(p)) + "</b>")
-        .openOn(mapa);
-
-    document.querySelectorAll(".item-pasada").forEach((boton, i) => {
-        boton.classList.toggle("activo", i === indice);
+ 
+function marcarLugar(latlng, centrar) {
+    if (!modoLugar) activarModoLugar();
+    ajustarACalle(latlng).then(calle => {
+        if (!calle || calle.distancia > MAXIMO_FUERA_DE_CALLE) {
+            L.popup().setLatLng(latlng).setContent("Toca sobre una calle").openOn(mapa);
+            return;
+        }
+        marcadorLugar.setLatLng(calle.latlng).addTo(mapa);
+        if (centrar) mapa.setView(calle.latlng, Math.max(mapa.getZoom(), 17));
+ 
+        const titulo = "<b>📍 " + escaparHtml(calle.calle || "Este punto") + "</b><br>";
+        marcadorLugar.unbindPopup();
+        marcadorLugar.bindPopup(titulo + "…", { minWidth: 200 }).openPopup();
+ 
+        const p = calle.latlng;
+        fetch(urlPasadas(p.lat.toFixed(6), p.lng.toFixed(6), TOLERANCIA_METROS))
+            .then(r => r.json())
+            .then(datos => {
+                const texto = datos.error ? escaparHtml(datos.error) : htmlVeces(datos.pasadas);
+                marcadorLugar.setPopupContent(titulo + texto);
+            })
+            .catch(() => marcadorLugar.setPopupContent(titulo + "Error del servidor"));
     });
 }
-
+ 
+mapa.on("click", e => {
+    if (modoLugar) marcarLugar(e.latlng, false);
+});
+marcadorLugar.on("dragend", () => marcarLugar(marcadorLugar.getLatLng(), false));
+ 
 // ---------- B. Buscar una dirección (Nominatim / OpenStreetMap) ----------
-
+ 
 function buscarDireccion() {
     const texto = document.getElementById("textoDireccion").value.trim();
     const resultados = document.getElementById("resultadosDireccion");
@@ -506,12 +475,12 @@ function buscarDireccion() {
         return;
     }
     resultados.innerHTML = '<div class="lista-titulo">…</div>';
-
+ 
     const centro = mapa.getCenter();
     const caja = [centro.lng - 0.3, centro.lat + 0.3, centro.lng + 0.3, centro.lat - 0.3].join(",");
     const url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=co" +
         "&accept-language=es&viewbox=" + caja + "&q=" + encodeURIComponent(texto);
-
+ 
     fetch(url)
         .then(r => r.json())
         .then(lugares => {
@@ -521,7 +490,7 @@ function buscarDireccion() {
                 return;
             }
             if (lugares.length === 1) {
-                colocarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true);
+                marcarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true);
                 return;
             }
             lugares.forEach(lugar => {
@@ -530,7 +499,7 @@ function buscarDireccion() {
                 boton.textContent = lugar.display_name.split(",").slice(0, 2).join(",");
                 boton.onclick = () => {
                     resultados.innerHTML = "";
-                    colocarLugar(L.latLng(lugar.lat, lugar.lon), true);
+                    marcarLugar(L.latLng(lugar.lat, lugar.lon), true);
                 };
                 resultados.appendChild(boton);
             });
@@ -540,9 +509,9 @@ function buscarDireccion() {
             resultados.innerHTML = '<div class="lista-titulo">Buscador no disponible</div>';
         });
 }
-
-// ---------- D. Tocar la ruta histórica ----------
-
+ 
+// ---------- D. Tocar la ruta ----------
+ 
 function puntoMasCercano(recorrido, latlng) {
     let mejor = 0;
     let mejorDistancia = Infinity;
@@ -555,57 +524,46 @@ function puntoMasCercano(recorrido, latlng) {
     });
     return mejor;
 }
-
-function analizarPuntoDeRuta(lat, lon) {
-    mapa.closePopup();
-    colocarLugar(L.latLng(lat, lon), false);
-    const sidebar = document.getElementById("sidebar");
-    if (!sidebar.classList.contains("abierta")) toggleSidebar();
-}
-
+ 
 function mostrarPopupDeRuta(recorrido, latlng, usarRango) {
     if (!recorrido || recorrido.puntos.length === 0) return;
     const i = puntoMasCercano(recorrido, latlng);
     const [lat, lon] = recorrido.puntos[i];
     const crudo = recorrido.detalle[i];
-
+ 
     const encabezado = "<b>" + escaparHtml(fechaCorta(crudo.fecha) + " · " + crudo.hora.slice(0, 5)) + "</b>";
     const popup = L.popup({ minWidth: 200 })
         .setLatLng([lat, lon])
         .setContent(encabezado)
         .openOn(mapa);
-
+ 
     fetch(urlPasadas(lat, lon, TOLERANCIA_METROS, usarRango))
         .then(r => r.json())
         .then(datos => {
             if (!mapa.hasLayer(popup) || datos.error) return;
-            const n = datos.pasadas.length;
-            let html = encabezado;
-            html += "<br>Pasó " + (n === 1 ? "1 vez" : n + " veces") + " por aquí";
-            html += '<details class="veces-popup"><summary>Ver cuándo</summary><ul>';
-            datos.pasadas.forEach(p => {
-                html += "<li>" + escaparHtml(textoPasada(p)) + "</li>";
-            });
-            html += "</ul></details>";
-            html += '<button class="btn-popup" onclick="analizarPuntoDeRuta(' + lat + ',' + lon + ')">📌 Ver lugar</button>';
-            popup.setContent(html);
+            popup.setContent(encabezado + "<br>" + htmlVeces(datos.pasadas));
         })
         .catch(error => console.error("Error buscando otras pasadas:", error));
 }
-
+ 
 // Línea morada (modo histórico): las otras veces se buscan dentro del rango Desde/Hasta
 lineaHistoricaToque.on("click", e => {
     L.DomEvent.stopPropagation(e);
+    if (modoLugar) return marcarLugar(e.latlng, false);
     if (recorridoActivo < 0) return;
     mostrarPopupDeRuta(recorridosHistoricos[recorridoActivo], e.latlng, true);
 });
-
+ 
 // Línea azul (en vivo): las otras veces se buscan en todo el historial
 lineaRecorridoToque.on("click", e => {
     L.DomEvent.stopPropagation(e);
+    if (modoLugar) return marcarLugar(e.latlng, false);
     mostrarPopupDeRuta(recorridoHoy, e.latlng, false);
 });
-
+ 
+// La página nunca debe desplazarse (evita que el título y los botones queden cortados arriba)
+window.addEventListener("scroll", () => window.scrollTo(0, 0));
+ 
 actualizarUbicacion();
 actualizarRecorrido();
 setInterval(actualizarUbicacion, 10000);
