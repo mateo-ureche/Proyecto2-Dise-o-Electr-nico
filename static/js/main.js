@@ -438,6 +438,10 @@ function ajustarACalle(latlng) {
 function marcarLugar(latlng, centrar, nombre) {
     if (!modoLugar) activarModoLugar();
     ajustarACalle(latlng).then(calle => {
+        // Una dirección buscada se respeta aunque OSRM no tenga la calle cerca
+        if (nombre && (!calle || calle.distancia > MAXIMO_FUERA_DE_CALLE)) {
+            calle = { latlng: latlng, distancia: 0, calle: "" };
+        }
         if (!calle || calle.distancia > MAXIMO_FUERA_DE_CALLE) {
             L.popup().setLatLng(latlng).setContent("Toca sobre una calle").openOn(mapa);
             return;
@@ -527,16 +531,45 @@ function cruceMasCercano(nodos, referencia) {
     );
 }
 
-// "Calle 79B #42-83" = sobre la Calle 79B, a 83 m de la Carrera 42 en dirección a la Carrera 43
-function ubicarDireccion(d) {
+// Zona (ciudad) donde se busca la dirección, en cualquier parte de Colombia:
+// - si el usuario escribe la ciudad ("..., Medellín"), se usa esa ciudad;
+// - si no, la ciudad donde está el mapa en ese momento.
+function zonaDeBusqueda(ciudad) {
+    const aZona = lugar => {
+        const [sur, norte, oeste, este] = lugar.boundingbox.map(Number);
+        return {
+            caja: { sur, oeste, norte, este },
+            centro: L.latLng(lugar.lat, lugar.lon),
+            nombre: (lugar.display_name || "").split(",")[0]
+        };
+    };
     const c = mapa.getCenter();
-    const caja = [c.lat - 0.15, c.lng - 0.15, c.lat + 0.15, c.lng + 0.15].map(v => v.toFixed(4)).join(",");
+    const porDefecto = {
+        caja: { sur: c.lat - 0.15, oeste: c.lng - 0.15, norte: c.lat + 0.15, este: c.lng + 0.15 },
+        centro: c, nombre: ""
+    };
+    const url = ciudad
+        ? "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&accept-language=es&q=" + encodeURIComponent(ciudad)
+        : "https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=es&lat=" + c.lat + "&lon=" + c.lng;
+    return fetch(url)
+        .then(r => r.json())
+        .then(datos => {
+            const lugar = Array.isArray(datos) ? datos[0] : datos;
+            return lugar && lugar.boundingbox ? aZona(lugar) : porDefecto;
+        })
+        .catch(() => porDefecto);
+}
+
+// "Calle 79B #42-83" = sobre la Calle 79B, a 83 m de la Carrera 42 en dirección a la Carrera 43
+function ubicarDireccion(d, zona) {
+    const z = zona.caja;
+    const caja = [z.sur, z.oeste, z.norte, z.este].map(v => v.toFixed(4)).join(",");
     const via = regexNombre(d.via, d.numVia, d.letraVia);
     const cruce1 = regexNombre(d.cruce, d.numCruce, d.letraCruce);
     const cruce2 = regexNombre(d.cruce, Number(d.numCruce) + 1, "");
     return Promise.all([buscarCruce(via, cruce1, caja), buscarCruce(via, cruce2, caja)])
         .then(([nodos1, nodos2]) => {
-            const esquina = cruceMasCercano(nodos1, c);
+            const esquina = cruceMasCercano(nodos1, zona.centro);
             if (!esquina) return null;
             const siguiente = cruceMasCercano(nodos2, esquina);
             if (!siguiente || esquina.distanceTo(siguiente) > 400) return esquina;
@@ -550,37 +583,52 @@ function ubicarDireccion(d) {
 }
 
 function buscarDireccion() {
-    const texto = document.getElementById("textoDireccion").value.trim();
+    const escrito = document.getElementById("textoDireccion").value.trim();
     const resultados = document.getElementById("resultadosDireccion");
-    if (!texto) {
+    if (!escrito) {
         alert("Escribe una dirección.");
         return;
     }
     resultados.innerHTML = '<div class="lista-titulo">…</div>';
 
+    // "Calle 79B #42-83, Medellín": lo que va después de la última coma (sin números) es la ciudad
+    const partes = escrito.split(",");
+    let ciudad = "";
+    if (partes.length > 1 && !/\d/.test(partes[partes.length - 1])) ciudad = partes.pop().trim();
+    const texto = partes.join(",").trim();
+
     const direccion = leerDireccion(texto);
-    if (direccion) {
-        ubicarDireccion(direccion).then(punto => {
+    console.log("Dirección leída:", direccion, "Ciudad:", ciudad || "(la del mapa)");
+
+    zonaDeBusqueda(ciudad).then(zona => {
+        console.log("Zona de búsqueda:", zona.nombre, zona.caja);
+        const enCiudad = zona.nombre ? ", " + zona.nombre : "";
+        if (!direccion) {
+            buscarEnNominatim(texto + (ciudad ? ", " + ciudad : ""), null, zona);
+            return;
+        }
+        const titulo = direccion.texto + enCiudad;
+        ubicarDireccion(direccion, zona).then(punto => {
+            console.log("Punto por cruces de OpenStreetMap:", punto);
             if (punto) {
                 resultados.innerHTML = "";
-                marcarLugar(punto, true, direccion.texto);
+                marcarLugar(punto, true, titulo);
             } else {
                 // No se encontró el cruce: se busca la calle y se muestra igual la dirección completa
-                buscarEnNominatim(direccion.via + " " + direccion.numVia + direccion.letraVia, direccion.texto);
+                buscarEnNominatim(direccion.via + " " + direccion.numVia + direccion.letraVia + enCiudad, titulo, zona);
             }
         });
-        return;
-    }
-    buscarEnNominatim(texto);
+    });
 }
 
-// Para nombres de lugares ("Universidad del Norte", "Parque Venezuela")
-function buscarEnNominatim(texto, titulo) {
+// Para nombres de lugares ("Universidad del Norte", "Parque Lleras, Medellín") y calles sin cruce
+function buscarEnNominatim(texto, titulo, zona) {
     const resultados = document.getElementById("resultadosDireccion");
-    const centro = mapa.getCenter();
-    const caja = [centro.lng - 0.3, centro.lat + 0.3, centro.lng + 0.3, centro.lat - 0.3].join(",");
+    const z = zona.caja;
+    // La ciudad es preferencia, no límite: se puede encontrar un lugar en cualquier parte del país
     const url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=co" +
-        "&accept-language=es&bounded=1&viewbox=" + caja + "&q=" + encodeURIComponent(texto);
+        "&accept-language=es&viewbox=" + [z.oeste, z.norte, z.este, z.sur].join(",") +
+        "&q=" + encodeURIComponent(texto);
 
     fetch(url)
         .then(r => r.json())
