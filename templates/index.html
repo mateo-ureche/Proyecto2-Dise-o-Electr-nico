@@ -60,6 +60,21 @@
             <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
             <div class="lista-recorridos" id="listaRecorridos"></div>
         </div>
+ 
+        <div class="seccion">
+            <div class="seccion-titulo">📌 ¿Cuándo pasó?</div>
+            <div class="fila-busqueda">
+                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Buscar dirección"
+                       onkeydown="if (event.key === 'Enter') buscarDireccion()">
+                <button class="btn-lupa" onclick="buscarDireccion()">🔍</button>
+            </div>
+            <div class="lista-recorridos" id="resultadosDireccion"></div>
+            <button class="btn btn-ver" onclick="ponerPinEnCentro()">📌 Poner pin</button>
+            <div id="controlesLugar" style="display: none;">
+                <div class="lista-recorridos" id="listaPasadas"></div>
+                <button class="btn btn-quitar" onclick="quitarLugar()">Quitar pin</button>
+            </div>
+        </div>
     </div>
  
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
