@@ -224,3 +224,61 @@ label {
     background: #AF043C;
     border-color: #AF043C;
 }
+.fila-busqueda {
+    display: flex;
+    gap: 6px;
+}
+.fila-busqueda .campo-fecha {
+    flex: 1;
+}
+.btn-lupa {
+    height: 37px;
+    width: 40px;
+    border: none;
+    border-radius: 8px;
+    background: #0f172a;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-quitar {
+    background: rgba(255,255,255,0.18);
+    color: white;
+}
+.item-pasada.activo {
+    background: #0f172a;
+    border-color: #0f172a;
+}
+.btn-popup {
+    margin-top: 6px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: #AF043C;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.leaflet-popup-content ul {
+    margin: 4px 0;
+    padding-left: 18px;
+}
+.btn-ver-cuando {
+    background: rgba(255,255,255,0.18);
+    color: white;
+    margin: 2px 0 8px;
+}
+.veces-popup {
+    margin: 4px 0 6px;
+}
+.veces-popup summary {
+    cursor: pointer;
+    color: #AF043C;
+    font-weight: bold;
+}
+.veces-popup ul {
+    max-height: 140px;
+    overflow-y: auto;
+}
+ 
