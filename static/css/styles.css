@@ -32,14 +32,6 @@ body {
     font-weight: bold;
     color: #0f172a;
 }
-.titulo-flotante .dominio-badge {
-    font-size: 11px;
-    font-weight: normal;
-    background: #e0f2fe;
-    color: #0369a1;
-    padding: 3px 10px;
-    border-radius: 10px;
-}
 .titulo-flotante .hora-flotante {
     font-size: 11px;
     font-weight: normal;
@@ -96,16 +88,6 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-.dominio-badge-sidebar {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: normal;
-    background: rgba(255,255,255,0.18);
-    color: #ffffff;
-    padding: 3px 10px;
-    border-radius: 10px;
-    margin-top: 8px;
 }
 .estado-vivo {
     font-size: 12px;
@@ -258,7 +240,7 @@ label {
     max-height: 140px;
     overflow-y: auto;
 }
- 
+
 .aviso-lugar {
     display: none;
     position: fixed;
@@ -278,4 +260,5 @@ label {
 #mapa.modo-lugar {
     cursor: crosshair;
 }
+
  

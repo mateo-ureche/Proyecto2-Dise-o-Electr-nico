@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>GPS Tracker - {{ dominio }}</title>
+    <title>GPS Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
@@ -13,17 +13,15 @@
  
     <div class="titulo-flotante" id="tituloFlotante">
         📍 GPS Tracker
-        <span class="dominio-badge">{{ dominio }}</span>
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
     </div>
  
     <div class="aviso-lugar" id="avisoLugar">Toca una calle del mapa</div>
- 
+
     <button class="toggle-btn" id="botonToggle" onclick="toggleSidebar()">☰</button>
  
     <div class="sidebar" id="sidebar">
         <div class="titulo-sidebar">📍 GPS Tracker</div>
-        <span class="dominio-badge-sidebar">{{ dominio }}</span>
  
         <div class="estado-vivo">
             <span class="punto"></span>
@@ -62,11 +60,11 @@
             <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
             <div class="lista-recorridos" id="listaRecorridos"></div>
         </div>
- 
+
         <div class="seccion">
             <div class="seccion-titulo">📍 ¿Cuándo pasó?</div>
             <div class="fila-busqueda">
-                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Buscar dirección"
+                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Ej: Calle 79B #42-83"
                        onkeydown="if (event.key === 'Enter') buscarDireccion()">
                 <button class="btn-lupa" onclick="buscarDireccion()">🔍</button>
             </div>
