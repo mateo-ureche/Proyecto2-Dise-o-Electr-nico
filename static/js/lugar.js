@@ -55,7 +55,6 @@ function terminarModoLugar() {
     document.getElementById("btnCuandoPaso").textContent = "📍 Marcar en el mapa";
     document.getElementById("avisoLugar").style.display = "none";
     document.getElementById("mapa").classList.remove("modo-lugar");
-    document.getElementById("resultadosDireccion").innerHTML = "";
 }
 
 function ajustarACalle(punto) {
@@ -70,20 +69,18 @@ function ajustarACalle(punto) {
         .catch(() => ({ punto: punto, distancia: 0, calle: "" }));
 }
 
-function marcarLugar(punto, centrar, nombre) {
+function marcarLugar(punto) {
     if (!modoLugar) activarModoLugar();
     ajustarACalle(punto).then(calle => {
         const lejos = !calle || calle.distancia > MAXIMO_FUERA_DE_CALLE;
-        if (lejos && !nombre) {
+        if (lejos) {
             L.popup().setLatLng(punto).setContent("Toca sobre una calle").openOn(mapa);
             return;
         }
-        if (lejos) calle = { punto: punto, calle: "" };
 
-        const titulo = "<b>📍 " + escaparHtml(nombre || calle.calle || "Este punto") + "</b><br>";
+        const titulo = "<b>📍 " + escaparHtml(calle.calle || "Este punto") + "</b><br>";
         marcadorLugar.setLatLng(calle.punto).addTo(mapa).unbindPopup()
             .bindPopup(titulo + "…", { minWidth: 200 }).openPopup();
-        if (centrar) mapa.setView(calle.punto, Math.max(mapa.getZoom(), 17));
 
         fetch(urlPasadas(calle.punto))
             .then(r => r.json())
@@ -103,9 +100,9 @@ function tocoLaRuta(e) {
 }
 
 mapa.on("click", e => {
-    if (modoLugar || tocoLaRuta(e)) marcarLugar(e.latlng, false);
+    if (modoLugar || tocoLaRuta(e)) marcarLugar(e.latlng);
 });
-marcadorLugar.on("dragend", () => marcarLugar(marcadorLugar.getLatLng(), false));
+marcadorLugar.on("dragend", () => marcarLugar(marcadorLugar.getLatLng()));
 mapa.on("popupopen", () => { popupAbierto = true; });
 mapa.on("popupclose", () => { popupAbierto = false; });
 
