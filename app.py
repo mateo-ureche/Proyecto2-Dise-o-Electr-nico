@@ -121,7 +121,6 @@ def pasadas():
     except (KeyError, ValueError):
         return jsonify({"error": "Parámetros inválidos"}), 400
 
-    # Puntos a menos de "radio" metros (fórmula de Haversine), ordenados por fecha y hora
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
     cursor.execute("""
@@ -141,7 +140,6 @@ def pasadas():
     cursor.close()
     conexion.close()
 
-    # Puntos seguidos (menos de 5 min entre uno y otro) forman una misma pasada
     lista = []
     for fecha, hora, momento in filas:
         if lista and momento - ultimo <= timedelta(minutes=5):

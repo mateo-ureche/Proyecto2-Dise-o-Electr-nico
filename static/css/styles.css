@@ -207,23 +207,6 @@ label {
     background: #AF043C;
     border-color: #AF043C;
 }
-.fila-busqueda {
-    display: flex;
-    gap: 6px;
-}
-.fila-busqueda .campo-fecha {
-    flex: 1;
-}
-.btn-lupa {
-    height: 37px;
-    width: 40px;
-    border: none;
-    border-radius: 8px;
-    background: #0f172a;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-}
 .leaflet-popup-content ul {
     margin: 4px 0;
     padding-left: 18px;
@@ -261,4 +244,5 @@ label {
     cursor: crosshair;
 }
 
+ 
  

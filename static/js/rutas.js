@@ -1,5 +1,3 @@
-// Funciones puras para construir rutas y recorridos a partir de puntos GPS crudos.
-
 function distanciaMetrosAprox(p1, p2) {
     const dLat = (p2[0] - p1[0]) * 111000;
     const dLon = (p2[1] - p1[1]) * 111000 * Math.cos(p1[0] * Math.PI / 180);

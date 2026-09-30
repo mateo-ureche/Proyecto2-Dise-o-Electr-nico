@@ -63,12 +63,6 @@
 
         <div class="seccion">
             <div class="seccion-titulo">📍 ¿Cuándo pasó?</div>
-            <div class="fila-busqueda">
-                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Dirección"
-                       onkeydown="if (event.key === 'Enter') buscarDireccion()">
-                <button class="btn-lupa" onclick="buscarDireccion()">🔍</button>
-            </div>
-            <div class="lista-recorridos" id="resultadosDireccion"></div>
             <button class="btn btn-ver" id="btnCuandoPaso" onclick="activarModoLugar()">📍 Marcar en el mapa</button>
         </div>
     </div>
@@ -81,7 +75,6 @@
     <script src="{{ url_for('static', filename='js/historico.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lugar.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/direcciones.js') }}"></script>
     <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
 </body>
 </html>
