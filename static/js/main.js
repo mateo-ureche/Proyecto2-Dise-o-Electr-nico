@@ -474,8 +474,10 @@ const TIPOS_VIA = {
 };
 
 function leerDireccion(texto) {
+    // "Calle 50 N 42-83": la N suelta es "número", no una letra
+    texto = texto.replace(/\s+n[.°º]?\s+(?=\d)/i, " # ");
     const m = texto.trim().match(
-        /^(calle|clle|cll|cl|carrera|carr|kra|cra|kr|cr)\.?\s*(\d+)\s*([a-z])?\s*(?:bis\s*)?(?:#|no\.?|n°|nº|numero|número)?\s*(\d+)\s*([a-z])?\s*-\s*(\d+)/i
+        /^(calle|clle|cll|cl|carrera|carr|kra|cra|kr|cr)\.?\s*(\d+)\s*([a-z])?\s*(?:bis\s*)?(?:#|no\.?|n°|nº|numero|número|n\.?)?\s*(\d+)\s*([a-z])?\s*-\s*(\d+)/i
     );
     if (!m) return null;
     const via = TIPOS_VIA[m[1].toLowerCase()];
@@ -500,8 +502,13 @@ function buscarCruce(via, cruce, caja) {
         'way["highway"]["name"~"' + via + '",i](' + caja + ')->.a;' +
         'way["highway"]["name"~"' + cruce + '",i](' + caja + ')->.b;' +
         'node(w.a)(w.b);out;';
-    return fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(consulta))
-        .then(r => r.json())
+    const pedir = servidor => fetch(servidor + "?data=" + encodeURIComponent(consulta))
+        .then(r => {
+            if (!r.ok) throw new Error("Overpass " + r.status);
+            return r.json();
+        });
+    return pedir("https://overpass-api.de/api/interpreter")
+        .catch(() => pedir("https://overpass.kumi.systems/api/interpreter"))
         .then(datos => {
             return (datos.elements || []).map(n => L.latLng(n.lat, n.lon));
         })
@@ -558,7 +565,8 @@ function buscarDireccion() {
                 resultados.innerHTML = "";
                 marcarLugar(punto, true, direccion.texto);
             } else {
-                buscarEnNominatim(texto);
+                // No se encontró el cruce: se busca la calle y se muestra igual la dirección completa
+                buscarEnNominatim(direccion.via + " " + direccion.numVia + direccion.letraVia, direccion.texto);
             }
         });
         return;
@@ -567,12 +575,12 @@ function buscarDireccion() {
 }
 
 // Para nombres de lugares ("Universidad del Norte", "Parque Venezuela")
-function buscarEnNominatim(texto) {
+function buscarEnNominatim(texto, titulo) {
     const resultados = document.getElementById("resultadosDireccion");
     const centro = mapa.getCenter();
     const caja = [centro.lng - 0.3, centro.lat + 0.3, centro.lng + 0.3, centro.lat - 0.3].join(",");
     const url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=co" +
-        "&accept-language=es&viewbox=" + caja + "&q=" + encodeURIComponent(texto);
+        "&accept-language=es&bounded=1&viewbox=" + caja + "&q=" + encodeURIComponent(texto);
 
     fetch(url)
         .then(r => r.json())
@@ -582,18 +590,18 @@ function buscarEnNominatim(texto) {
                 resultados.innerHTML = '<div class="lista-titulo">No encontrada</div>';
                 return;
             }
-            const nombreCorto = lugar => lugar.display_name.split(",").slice(0, 3).join(",");
-            if (lugares.length === 1) {
-                marcarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true, nombreCorto(lugares[0]));
+            const nombre = lugar => titulo || lugar.display_name.replace(/, Colombia$/, "");
+            if (lugares.length === 1 || titulo) {
+                marcarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true, nombre(lugares[0]));
                 return;
             }
             lugares.forEach(lugar => {
                 const boton = document.createElement("button");
                 boton.className = "item-recorrido";
-                boton.textContent = nombreCorto(lugar);
+                boton.textContent = nombre(lugar);
                 boton.onclick = () => {
                     resultados.innerHTML = "";
-                    marcarLugar(L.latLng(lugar.lat, lugar.lon), true, nombreCorto(lugar));
+                    marcarLugar(L.latLng(lugar.lat, lugar.lon), true, nombre(lugar));
                 };
                 resultados.appendChild(boton);
             });
