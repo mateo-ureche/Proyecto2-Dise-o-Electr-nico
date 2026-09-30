@@ -42,7 +42,7 @@ let primeraCarga = true;
 let modoHistorico = false;
 let recorridosHistoricos = [];
 let recorridoActivo = -1;
- 
+
 // Línea invisible y más gruesa encima de la histórica para que sea fácil tocarla en el celular
 let lineaHistoricaToque = L.polyline([], { color: '#7c3aed', weight: 22, opacity: 0.01 });
 let lineaRecorridoToque = L.polyline([], { color: '#2563eb', weight: 22, opacity: 0.01 }).addTo(mapa);
@@ -50,7 +50,7 @@ let recorridoHoy = { puntos: [], detalle: [] };
 let popupAbierto = false;
 mapa.on("popupopen", () => { popupAbierto = true; });
 mapa.on("popupclose", () => { popupAbierto = false; });
- 
+
 const iconoLugar = L.divIcon({
     html: '<div style="font-size:30px;">📍</div>',
     className: '',
@@ -346,20 +346,20 @@ function volverTiempoReal() {
 // ================================================================
 // ¿Cuándo pasó el vehículo por determinado lugar?
 // ================================================================
- 
+
 function escaparHtml(texto) {
     const div = document.createElement("div");
     div.textContent = texto ?? "";
     return div.innerHTML;
 }
- 
+
 function rangoSeleccionado() {
     const inicio = document.getElementById("fechaInicio").value;
     const fin = document.getElementById("fechaFin").value;
     if (inicio && fin) return { inicio, fin };
     return null;
 }
- 
+
 function urlPasadas(lat, lon, radio, usarRango = true) {
     let url = "/api/pasadas?lat=" + lat + "&lon=" + lon + "&radio=" + radio;
     const rango = usarRango ? rangoSeleccionado() : null;
@@ -368,11 +368,11 @@ function urlPasadas(lat, lon, radio, usarRango = true) {
     }
     return url;
 }
- 
+
 function fechaCorta(fecha) {
     return fecha.slice(0, 5);
 }
- 
+
 function textoPasada(p) {
     const entrada = p.entrada.hora.slice(0, 5);
     const salida = p.salida.hora.slice(0, 5);
@@ -383,7 +383,7 @@ function textoPasada(p) {
     }
     return dia + " " + entrada + " – " + fechaCorta(p.salida.fecha) + " " + salida;
 }
- 
+
 function htmlVeces(pasadas) {
     const n = pasadas.length;
     if (n === 0) return "No ha pasado por aquí";
@@ -394,9 +394,9 @@ function htmlVeces(pasadas) {
     });
     return html + "</ul></details>";
 }
- 
+
 // ---------- Marcador en una calle ----------
- 
+
 function activarModoLugar() {
     if (modoLugar) {
         terminarModoLugar();
@@ -409,7 +409,7 @@ function activarModoLugar() {
     const sidebar = document.getElementById("sidebar");
     if (sidebar.classList.contains("abierta")) toggleSidebar();
 }
- 
+
 function terminarModoLugar() {
     modoLugar = false;
     mapa.removeLayer(marcadorLugar);
@@ -419,7 +419,7 @@ function terminarModoLugar() {
     document.getElementById("mapa").classList.remove("modo-lugar");
     document.getElementById("resultadosDireccion").innerHTML = "";
 }
- 
+
 // Usa OSRM (OpenStreetMap) para mover el punto tocado a la calle más cercana
 function ajustarACalle(latlng) {
     const url = "https://router.project-osrm.org/nearest/v1/driving/" +
@@ -434,8 +434,8 @@ function ajustarACalle(latlng) {
         // Si el servicio no responde, se usa el punto tal cual se tocó
         .catch(() => ({ latlng: latlng, distancia: 0, calle: "" }));
 }
- 
-function marcarLugar(latlng, centrar) {
+
+function marcarLugar(latlng, centrar, nombre) {
     if (!modoLugar) activarModoLugar();
     ajustarACalle(latlng).then(calle => {
         if (!calle || calle.distancia > MAXIMO_FUERA_DE_CALLE) {
@@ -444,11 +444,11 @@ function marcarLugar(latlng, centrar) {
         }
         marcadorLugar.setLatLng(calle.latlng).addTo(mapa);
         if (centrar) mapa.setView(calle.latlng, Math.max(mapa.getZoom(), 17));
- 
-        const titulo = "<b>📍 " + escaparHtml(calle.calle || "Este punto") + "</b><br>";
+
+        const titulo = "<b>📍 " + escaparHtml(nombre || calle.calle || "Este punto") + "</b><br>";
         marcadorLugar.unbindPopup();
         marcadorLugar.bindPopup(titulo + "…", { minWidth: 200 }).openPopup();
- 
+
         const p = calle.latlng;
         fetch(urlPasadas(p.lat.toFixed(6), p.lng.toFixed(6), TOLERANCIA_METROS))
             .then(r => r.json())
@@ -459,14 +459,89 @@ function marcarLugar(latlng, centrar) {
             .catch(() => marcadorLugar.setPopupContent(titulo + "Error del servidor"));
     });
 }
- 
+
 mapa.on("click", e => {
     if (modoLugar) marcarLugar(e.latlng, false);
 });
 marcadorLugar.on("dragend", () => marcarLugar(marcadorLugar.getLatLng(), false));
- 
+
 // ---------- B. Buscar una dirección (Nominatim / OpenStreetMap) ----------
- 
+
+// Entiende direcciones colombianas: "Calle 79B #42-83", "Cra 43 # 80-15", "Cl 72 No. 50 - 20"
+const TIPOS_VIA = {
+    calle: "Calle", cl: "Calle", cll: "Calle", clle: "Calle",
+    carrera: "Carrera", cra: "Carrera", cr: "Carrera", kr: "Carrera", kra: "Carrera", carr: "Carrera"
+};
+
+function leerDireccion(texto) {
+    const m = texto.trim().match(
+        /^(calle|clle|cll|cl|carrera|carr|kra|cra|kr|cr)\.?\s*(\d+)\s*([a-z])?\s*(?:bis\s*)?(?:#|no\.?|n°|nº|numero|número)?\s*(\d+)\s*([a-z])?\s*-\s*(\d+)/i
+    );
+    if (!m) return null;
+    const via = TIPOS_VIA[m[1].toLowerCase()];
+    const cruce = via === "Calle" ? "Carrera" : "Calle";
+    const letraVia = (m[3] || "").toUpperCase();
+    const letraCruce = (m[5] || "").toUpperCase();
+    return {
+        via: via, numVia: m[2], letraVia: letraVia,
+        cruce: cruce, numCruce: m[4], letraCruce: letraCruce,
+        metros: Number(m[6]),
+        texto: via + " " + m[2] + letraVia + " #" + m[4] + letraCruce + "-" + m[6]
+    };
+}
+
+function regexNombre(tipo, numero, letra) {
+    return "^" + tipo + " " + numero + (letra ? " ?" + letra : "") + "$";
+}
+
+// Busca en OpenStreetMap (Overpass) el cruce entre dos calles
+function buscarCruce(via, cruce, caja) {
+    const consulta = '[out:json][timeout:15];' +
+        'way["highway"]["name"~"' + via + '",i](' + caja + ')->.a;' +
+        'way["highway"]["name"~"' + cruce + '",i](' + caja + ')->.b;' +
+        'node(w.a)(w.b);out;';
+    return fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(consulta))
+        .then(r => r.json())
+        .then(datos => {
+            return (datos.elements || []).map(n => L.latLng(n.lat, n.lon));
+        })
+        .catch(() => []);
+}
+
+// Puede haber el mismo cruce en otro municipio (Soledad, Malambo...): se toma el más cercano a "referencia"
+// y se promedian los nodos de ese mismo cruce (las avenidas de doble calzada tienen varios)
+function cruceMasCercano(nodos, referencia) {
+    if (nodos.length === 0) return null;
+    const cercano = nodos.reduce((a, b) => a.distanceTo(referencia) <= b.distanceTo(referencia) ? a : b);
+    const grupo = nodos.filter(n => n.distanceTo(cercano) < 80);
+    return L.latLng(
+        grupo.reduce((t, n) => t + n.lat, 0) / grupo.length,
+        grupo.reduce((t, n) => t + n.lng, 0) / grupo.length
+    );
+}
+
+// "Calle 79B #42-83" = sobre la Calle 79B, a 83 m de la Carrera 42 en dirección a la Carrera 43
+function ubicarDireccion(d) {
+    const c = mapa.getCenter();
+    const caja = [c.lat - 0.15, c.lng - 0.15, c.lat + 0.15, c.lng + 0.15].map(v => v.toFixed(4)).join(",");
+    const via = regexNombre(d.via, d.numVia, d.letraVia);
+    const cruce1 = regexNombre(d.cruce, d.numCruce, d.letraCruce);
+    const cruce2 = regexNombre(d.cruce, Number(d.numCruce) + 1, "");
+    return Promise.all([buscarCruce(via, cruce1, caja), buscarCruce(via, cruce2, caja)])
+        .then(([nodos1, nodos2]) => {
+            const esquina = cruceMasCercano(nodos1, c);
+            if (!esquina) return null;
+            const siguiente = cruceMasCercano(nodos2, esquina);
+            if (!siguiente || esquina.distanceTo(siguiente) > 400) return esquina;
+            const cuadra = esquina.distanceTo(siguiente);
+            const f = Math.min(d.metros / cuadra, 1);
+            return L.latLng(
+                esquina.lat + (siguiente.lat - esquina.lat) * f,
+                esquina.lng + (siguiente.lng - esquina.lng) * f
+            );
+        });
+}
+
 function buscarDireccion() {
     const texto = document.getElementById("textoDireccion").value.trim();
     const resultados = document.getElementById("resultadosDireccion");
@@ -475,12 +550,30 @@ function buscarDireccion() {
         return;
     }
     resultados.innerHTML = '<div class="lista-titulo">…</div>';
- 
+
+    const direccion = leerDireccion(texto);
+    if (direccion) {
+        ubicarDireccion(direccion).then(punto => {
+            if (punto) {
+                resultados.innerHTML = "";
+                marcarLugar(punto, true, direccion.texto);
+            } else {
+                buscarEnNominatim(texto);
+            }
+        });
+        return;
+    }
+    buscarEnNominatim(texto);
+}
+
+// Para nombres de lugares ("Universidad del Norte", "Parque Venezuela")
+function buscarEnNominatim(texto) {
+    const resultados = document.getElementById("resultadosDireccion");
     const centro = mapa.getCenter();
     const caja = [centro.lng - 0.3, centro.lat + 0.3, centro.lng + 0.3, centro.lat - 0.3].join(",");
     const url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=co" +
         "&accept-language=es&viewbox=" + caja + "&q=" + encodeURIComponent(texto);
- 
+
     fetch(url)
         .then(r => r.json())
         .then(lugares => {
@@ -489,17 +582,18 @@ function buscarDireccion() {
                 resultados.innerHTML = '<div class="lista-titulo">No encontrada</div>';
                 return;
             }
+            const nombreCorto = lugar => lugar.display_name.split(",").slice(0, 3).join(",");
             if (lugares.length === 1) {
-                marcarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true);
+                marcarLugar(L.latLng(lugares[0].lat, lugares[0].lon), true, nombreCorto(lugares[0]));
                 return;
             }
             lugares.forEach(lugar => {
                 const boton = document.createElement("button");
                 boton.className = "item-recorrido";
-                boton.textContent = lugar.display_name.split(",").slice(0, 2).join(",");
+                boton.textContent = nombreCorto(lugar);
                 boton.onclick = () => {
                     resultados.innerHTML = "";
-                    marcarLugar(L.latLng(lugar.lat, lugar.lon), true);
+                    marcarLugar(L.latLng(lugar.lat, lugar.lon), true, nombreCorto(lugar));
                 };
                 resultados.appendChild(boton);
             });
@@ -509,9 +603,9 @@ function buscarDireccion() {
             resultados.innerHTML = '<div class="lista-titulo">Buscador no disponible</div>';
         });
 }
- 
+
 // ---------- D. Tocar la ruta ----------
- 
+
 function puntoMasCercano(recorrido, latlng) {
     let mejor = 0;
     let mejorDistancia = Infinity;
@@ -524,19 +618,19 @@ function puntoMasCercano(recorrido, latlng) {
     });
     return mejor;
 }
- 
+
 function mostrarPopupDeRuta(recorrido, latlng, usarRango) {
     if (!recorrido || recorrido.puntos.length === 0) return;
     const i = puntoMasCercano(recorrido, latlng);
     const [lat, lon] = recorrido.puntos[i];
     const crudo = recorrido.detalle[i];
- 
+
     const encabezado = "<b>" + escaparHtml(fechaCorta(crudo.fecha) + " · " + crudo.hora.slice(0, 5)) + "</b>";
     const popup = L.popup({ minWidth: 200 })
         .setLatLng([lat, lon])
         .setContent(encabezado)
         .openOn(mapa);
- 
+
     fetch(urlPasadas(lat, lon, TOLERANCIA_METROS, usarRango))
         .then(r => r.json())
         .then(datos => {
@@ -545,7 +639,7 @@ function mostrarPopupDeRuta(recorrido, latlng, usarRango) {
         })
         .catch(error => console.error("Error buscando otras pasadas:", error));
 }
- 
+
 // Línea morada (modo histórico): las otras veces se buscan dentro del rango Desde/Hasta
 lineaHistoricaToque.on("click", e => {
     L.DomEvent.stopPropagation(e);
@@ -553,17 +647,17 @@ lineaHistoricaToque.on("click", e => {
     if (recorridoActivo < 0) return;
     mostrarPopupDeRuta(recorridosHistoricos[recorridoActivo], e.latlng, true);
 });
- 
+
 // Línea azul (en vivo): las otras veces se buscan en todo el historial
 lineaRecorridoToque.on("click", e => {
     L.DomEvent.stopPropagation(e);
     if (modoLugar) return marcarLugar(e.latlng, false);
     mostrarPopupDeRuta(recorridoHoy, e.latlng, false);
 });
- 
+
 // La página nunca debe desplazarse (evita que el título y los botones queden cortados arriba)
 window.addEventListener("scroll", () => window.scrollTo(0, 0));
- 
+
 actualizarUbicacion();
 actualizarRecorrido();
 setInterval(actualizarUbicacion, 10000);
