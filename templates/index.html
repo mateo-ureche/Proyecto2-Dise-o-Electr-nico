@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>GPS Tracker</title>
+    <title>GPS Tracker - {{ dominio }}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
@@ -64,7 +64,7 @@
         <div class="seccion">
             <div class="seccion-titulo">📍 ¿Cuándo pasó?</div>
             <div class="fila-busqueda">
-                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Ej: Calle 79B #42-83"
+                <input type="text" class="campo-fecha" id="textoDireccion" placeholder="Dirección"
                        onkeydown="if (event.key === 'Enter') buscarDireccion()">
                 <button class="btn-lupa" onclick="buscarDireccion()">🔍</button>
             </div>
