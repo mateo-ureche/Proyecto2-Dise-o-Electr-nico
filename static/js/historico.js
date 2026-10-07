@@ -1,3 +1,5 @@
+const MARGEN_VISIBLE = { paddingTopLeft: [40, 90], paddingBottomRight: [40, 200] };
+
 function formatoLegible(iso) {
     const [fecha, hora] = iso.split("T");
     const [anio, mes, dia] = fecha.split("-");
@@ -35,7 +37,7 @@ function dibujarRecorridoHistorico(indice) {
     marcadorFinHist.setLatLng(ruta[ruta.length - 1]);
     marcadorFinHist.addTo(mapa);
 
-    mapa.fitBounds(lineaHistorica.getBounds(), { padding: [40, 40] });
+    mapa.fitBounds(lineaHistorica.getBounds(), MARGEN_VISIBLE);
 
     document.querySelectorAll(".item-recorrido").forEach((boton, i) => {
         boton.classList.toggle("activo", i === indice);
@@ -58,7 +60,8 @@ function moverPorTiempo(indice, posicion) {
     const recorrido = recorridosHistoricos[indice];
     const registro = recorrido.registros[posicion];
     marcadorTiempo.setLatLng(recorrido.puntos[posicion]);
-    if (!mapa.getBounds().contains(recorrido.puntos[posicion])) mapa.panTo(recorrido.puntos[posicion]);
+    marcadorTiempo.bringToFront();
+    mapa.panInside(recorrido.puntos[posicion], MARGEN_VISIBLE);
     document.getElementById("textoTiempo").textContent = registro.fecha + " · " + registro.hora;
 }
 

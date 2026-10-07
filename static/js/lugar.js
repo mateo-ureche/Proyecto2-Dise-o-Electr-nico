@@ -16,9 +16,9 @@ function escaparHtml(texto) {
 }
 
 function textoPasada(p) {
-    const duracion = p.minutos < 1 ? "<1 min" : Math.round(p.minutos) + " min";
+    const duracion = p.minutos < 1 ? "" : " · " + Math.round(p.minutos) + " min";
     return p.entrada.fecha.slice(0, 5) + " · " + p.entrada.hora.slice(0, 5) + "–" +
-           p.salida.hora.slice(0, 5) + " · " + duracion;
+           p.salida.hora.slice(0, 5) + duracion;
 }
 
 function htmlVeces(pasadas) {

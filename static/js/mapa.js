@@ -5,7 +5,7 @@ const configPicker = {
     dateFormat: "Y-m-dTH:i",
     altInput: true,
     altFormat: "d/m/Y H:i",
-    minDate: "2026-09-09",
+    minDate: "2026-09-16T13:35",
     maxDate: new Date(),
     disableMobile: true
 };
@@ -39,7 +39,7 @@ let lineaHistorica = L.polyline([], { color: '#7c3aed', weight: 4, dashArray: '8
 let marcadorInicioHoy = L.marker([0, 0], { icon: iconoInicio });
 let marcadorInicioHist = L.marker([0, 0], { icon: iconoInicio });
 let marcadorFinHist = L.marker([0, 0], { icon: iconoFin });
-let marcadorTiempo = L.circleMarker([0, 0], { radius: 9, color: '#ffffff', weight: 3, fillColor: '#AF043C', fillOpacity: 1 });
+let marcadorTiempo = L.circleMarker([0, 0], { radius: 10, color: '#ffffff', weight: 3, fillColor: '#AF043C', fillOpacity: 1 });
 let primeraCarga = true;
 let modoHistorico = false;
 let recorridosHistoricos = [];

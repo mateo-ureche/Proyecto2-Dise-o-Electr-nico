@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 
 PROPIETARIO = os.environ.get("DOMINIO", "desconocido")
-FECHA_MINIMA = datetime(2026, 9, 9)
+FECHA_MINIMA = datetime(2026, 9, 16, 13, 35, 23)
 
 DB_CONFIG = dict(
     host=os.environ["DB_HOST"],
@@ -85,8 +85,7 @@ def historico():
     if not inicio or not fin:
         return jsonify({"error": "Debes especificar inicio y fin"}), 400
 
-    inicio = max(inicio, FECHA_MINIMA.strftime("%Y-%m-%dT%H:%M"))
-    inicio_sql = inicio.replace("T", " ") + ":00"
+    inicio_sql = max(inicio.replace("T", " ") + ":00", FECHA_MINIMA.strftime("%Y-%m-%d %H:%M:%S"))
     fin_sql = fin.replace("T", " ") + ":00"
 
     conexion = psycopg2.connect(**DB_CONFIG)
