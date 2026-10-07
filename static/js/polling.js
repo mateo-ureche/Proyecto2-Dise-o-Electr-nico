@@ -39,7 +39,7 @@ function actualizarUbicacion() {
             if (datos.latitud && datos.longitud) {
                 const nuevaPos = [datos.latitud, datos.longitud];
                 marcador.setLatLng(nuevaPos);
-                mapa.setView(nuevaPos);
+                if (!window.modoLugar && !window.popupAbierto) mapa.setView(nuevaPos);
             }
         })
         .catch(error => console.error("Error:", error));

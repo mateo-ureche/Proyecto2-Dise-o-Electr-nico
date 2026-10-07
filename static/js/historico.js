@@ -58,6 +58,7 @@ function moverPorTiempo(indice, posicion) {
     const recorrido = recorridosHistoricos[indice];
     const registro = recorrido.registros[posicion];
     marcadorTiempo.setLatLng(recorrido.puntos[posicion]);
+    if (!mapa.getBounds().contains(recorrido.puntos[posicion])) mapa.panTo(recorrido.puntos[posicion]);
     document.getElementById("textoTiempo").textContent = registro.fecha + " · " + registro.hora;
 }
 
@@ -103,6 +104,7 @@ function verHistorico() {
 }
 
 function volverTiempoReal() {
+    if (modoLugar) terminarModoLugar();
     modoHistorico = false;
     mapa.removeLayer(lineaHistorica);
     mapa.removeLayer(marcadorInicioHist);

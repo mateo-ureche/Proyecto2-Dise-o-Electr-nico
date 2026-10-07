@@ -6,7 +6,8 @@ const configPicker = {
     altInput: true,
     altFormat: "d/m/Y H:i",
     minDate: "2026-09-09",
-    maxDate: new Date()
+    maxDate: new Date(),
+    disableMobile: true
 };
 flatpickr("#fechaInicio", configPicker);
 flatpickr("#fechaFin", configPicker);
