@@ -207,6 +207,53 @@ label {
     background: #AF043C;
     border-color: #AF043C;
 }
+.leaflet-popup-content ul {
+    margin: 4px 0;
+    padding-left: 18px;
+}
+.veces-popup {
+    margin: 4px 0 6px;
+}
+.veces-popup summary {
+    cursor: pointer;
+    color: #AF043C;
+    font-weight: bold;
+}
+.veces-popup ul {
+    max-height: 140px;
+    overflow-y: auto;
+}
+.aviso-lugar {
+    display: none;
+    position: fixed;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    background: #AF043C;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+#mapa.modo-lugar {
+    cursor: crosshair;
+}
+.btn-marcar {
+    display: block;
+    margin: 8px auto 0;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 20px;
+    background: #AF043C;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
 .titulo-tiempo {
     text-align: center;
     font-size: 11px;
@@ -241,3 +288,25 @@ label {
 
  
  
+@media (max-width: 600px) {
+    .titulo-flotante {
+        right: 60px;
+        flex-wrap: wrap;
+        gap: 2px 8px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    .titulo-flotante .hora-flotante {
+        border-left: none;
+        padding-left: 0;
+    }
+    .barra-tiempo {
+        bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    #sliderTiempo {
+        height: 28px;
+    }
+    .aviso-lugar {
+        bottom: calc(150px + env(safe-area-inset-bottom));
+    }
+}
