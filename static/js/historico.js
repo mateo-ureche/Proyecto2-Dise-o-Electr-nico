@@ -40,6 +40,25 @@ function dibujarRecorridoHistorico(indice) {
     document.querySelectorAll(".item-recorrido").forEach((boton, i) => {
         boton.classList.toggle("activo", i === indice);
     });
+
+    prepararBarraTiempo(indice);
+}
+
+function prepararBarraTiempo(indice) {
+    const slider = document.getElementById("sliderTiempo");
+    slider.max = recorridosHistoricos[indice].puntos.length - 1;
+    slider.value = 0;
+    slider.oninput = () => moverPorTiempo(indice, Number(slider.value));
+    document.getElementById("barraTiempo").style.display = "block";
+    marcadorTiempo.addTo(mapa);
+    moverPorTiempo(indice, 0);
+}
+
+function moverPorTiempo(indice, posicion) {
+    const recorrido = recorridosHistoricos[indice];
+    const registro = recorrido.registros[posicion];
+    marcadorTiempo.setLatLng(recorrido.puntos[posicion]);
+    document.getElementById("textoTiempo").textContent = registro.fecha + " · " + registro.hora;
 }
 
 function verHistorico() {
@@ -88,6 +107,8 @@ function volverTiempoReal() {
     mapa.removeLayer(lineaHistorica);
     mapa.removeLayer(marcadorInicioHist);
     mapa.removeLayer(marcadorFinHist);
+    mapa.removeLayer(marcadorTiempo);
+    document.getElementById("barraTiempo").style.display = "none";
     lineaRecorrido.addTo(mapa);
     marcador.addTo(mapa);
     document.getElementById("btnTiempoReal").style.display = "none";

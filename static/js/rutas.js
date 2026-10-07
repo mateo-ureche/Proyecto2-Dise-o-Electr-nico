@@ -57,7 +57,7 @@ function construirRecorridos(puntosCrudos) {
         const momento = aFecha(p);
 
         if (actual === null) {
-            actual = { puntos: [nuevoPunto], inicio: p, fin: p, ultimoMovimiento: momento };
+            actual = { puntos: [nuevoPunto], registros: [p], inicio: p, fin: p, ultimoMovimiento: momento };
             continue;
         }
 
@@ -75,9 +75,10 @@ function construirRecorridos(puntosCrudos) {
         const minutosQuieto = (momento - actual.ultimoMovimiento) / 60000;
         if (esSalto || minutosQuieto > MINUTOS_PARA_SEPARAR) {
             recorridos.push(actual);
-            actual = { puntos: [nuevoPunto], inicio: p, fin: p, ultimoMovimiento: momento };
+            actual = { puntos: [nuevoPunto], registros: [p], inicio: p, fin: p, ultimoMovimiento: momento };
         } else {
             actual.puntos.push(nuevoPunto);
+            actual.registros.push(p);
             actual.fin = p;
             actual.ultimoMovimiento = momento;
         }
