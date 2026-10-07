@@ -16,7 +16,11 @@
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
     </div>
  
-    <div class="aviso-lugar" id="avisoLugar">Toca una calle del mapa</div>
+    <div class="barra-tiempo" id="barraTiempo">
+        <div class="titulo-tiempo">📍 ¿Cuándo pasó? Mueve la barra</div>
+        <div class="texto-tiempo" id="textoTiempo">--/--/---- · --:--:--</div>
+        <input type="range" id="sliderTiempo" min="0" max="0" value="0">
+    </div>
 
     <button class="toggle-btn" id="botonToggle" onclick="toggleSidebar()">☰</button>
  
@@ -60,11 +64,6 @@
             <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
             <div class="lista-recorridos" id="listaRecorridos"></div>
         </div>
-
-        <div class="seccion">
-            <div class="seccion-titulo">📍 ¿Cuándo pasó?</div>
-            <button class="btn btn-ver" id="btnCuandoPaso" onclick="activarModoLugar()">📍 Marcar en el mapa</button>
-        </div>
     </div>
  
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -74,7 +73,6 @@
     <script src="{{ url_for('static', filename='js/rutas.js') }}"></script>
     <script src="{{ url_for('static', filename='js/historico.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/lugar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
 </body>
 </html>

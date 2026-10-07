@@ -9,6 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 
 PROPIETARIO = os.environ.get("DOMINIO", "desconocido")
+FECHA_MINIMA = datetime(2026, 9, 9)
 
 DB_CONFIG = dict(
     host=os.environ["DB_HOST"],
@@ -84,6 +85,7 @@ def historico():
     if not inicio or not fin:
         return jsonify({"error": "Debes especificar inicio y fin"}), 400
 
+    inicio = max(inicio, FECHA_MINIMA.strftime("%Y-%m-%dT%H:%M"))
     inicio_sql = inicio.replace("T", " ") + ":00"
     fin_sql = fin.replace("T", " ") + ":00"
 
@@ -106,50 +108,6 @@ def historico():
         for f in filas
     ]
     return jsonify(puntos)
-
-def leer_fecha(texto, por_defecto):
-    return datetime.strptime(texto, "%Y-%m-%dT%H:%M") if texto else por_defecto
-
-@app.route("/api/pasadas")
-def pasadas():
-    try:
-        lat = float(request.args["lat"])
-        lon = float(request.args["lon"])
-        radio = min(float(request.args.get("radio", 30)), 1000)
-        inicio = leer_fecha(request.args.get("inicio"), datetime(2000, 1, 1))
-        fin = leer_fecha(request.args.get("fin"), datetime(2100, 1, 1)) + timedelta(seconds=59)
-    except (KeyError, ValueError):
-        return jsonify({"error": "Parámetros inválidos"}), 400
-
-    conexion = psycopg2.connect(**DB_CONFIG)
-    cursor = conexion.cursor()
-    cursor.execute("""
-        SELECT fecha, hora, momento FROM (
-            SELECT fecha, hora, latitud, longitud,
-                TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS')::timestamp AS momento
-            FROM ubicaciones WHERE propietario = %(propietario)s
-        ) sub
-        WHERE momento BETWEEN %(inicio)s AND %(fin)s
-        AND 6371000 * 2 * ASIN(SQRT(
-            POWER(SIN(RADIANS(latitud - %(lat)s) / 2), 2) +
-            COS(RADIANS(%(lat)s)) * COS(RADIANS(latitud)) * POWER(SIN(RADIANS(longitud - %(lon)s) / 2), 2)
-        )) <= %(radio)s
-        ORDER BY momento
-    """, {"propietario": PROPIETARIO, "lat": lat, "lon": lon, "radio": radio, "inicio": inicio, "fin": fin})
-    filas = cursor.fetchall()
-    cursor.close()
-    conexion.close()
-
-    lista = []
-    for fecha, hora, momento in filas:
-        if lista and momento - ultimo <= timedelta(minutes=5):
-            lista[-1]["salida"] = {"fecha": fecha, "hora": hora}
-            lista[-1]["minutos"] = round((momento - primero).total_seconds() / 60, 1)
-        else:
-            primero = momento
-            lista.append({"entrada": {"fecha": fecha, "hora": hora}, "salida": {"fecha": fecha, "hora": hora}, "minutos": 0})
-        ultimo = momento
-    return jsonify({"pasadas": lista})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
