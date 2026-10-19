@@ -4,32 +4,45 @@ function distanciaMetrosAprox(p1, p2) {
     return Math.sqrt(dLat * dLat + dLon * dLon);
 }
 
+const VELOCIDAD_MAXIMA_KMH = 150;
+
+function esSalto(anterior, momentoAnterior, nuevoPunto, momento) {
+    const metros = distanciaMetrosAprox(anterior, nuevoPunto);
+    const segundos = (momento - momentoAnterior) / 1000;
+    if (segundos <= 0) return metros >= 500;
+    return metros / segundos * 3.6 > VELOCIDAD_MAXIMA_KMH;
+}
+
 function construirRutaFiltrada(puntosCrudos) {
     const ruta = [];
+    let momentoAnterior = null;
     let rechazosSeguidos = 0;
     for (const p of puntosCrudos) {
         const lat = Math.round(p.latitud * 10000) / 10000;
         const lon = Math.round(p.longitud * 10000) / 10000;
         const nuevoPunto = [lat, lon];
+        const momento = aFecha(p);
         const anterior = ruta[ruta.length - 1];
 
         if (!anterior) {
             ruta.push(nuevoPunto);
+            momentoAnterior = momento;
             continue;
         }
 
         const esDistinto = anterior[0] !== nuevoPunto[0] || anterior[1] !== nuevoPunto[1];
         if (!esDistinto) continue;
 
-        const esRazonable = distanciaMetrosAprox(anterior, nuevoPunto) < 500;
-        if (esRazonable) {
+        if (!esSalto(anterior, momentoAnterior, nuevoPunto, momento)) {
             ruta.push(nuevoPunto);
+            momentoAnterior = momento;
             rechazosSeguidos = 0;
         } else {
             rechazosSeguidos++;
             if (rechazosSeguidos >= 2) {
                 ruta.length = 0;
                 ruta.push(nuevoPunto);
+                momentoAnterior = momento;
                 rechazosSeguidos = 0;
             }
         }
@@ -65,15 +78,16 @@ function construirRecorridos(puntosCrudos) {
         const esDistinto = anterior[0] !== nuevoPunto[0] || anterior[1] !== nuevoPunto[1];
         if (!esDistinto) continue;
 
-        const esSalto = distanciaMetrosAprox(anterior, nuevoPunto) >= 500;
-        if (esSalto) {
+        const momentoAnterior = aFecha(actual.registros[actual.registros.length - 1]);
+        const saltoImposible = esSalto(anterior, momentoAnterior, nuevoPunto, momento);
+        if (saltoImposible) {
             rechazosSeguidos++;
             if (rechazosSeguidos < 2) continue;
         }
         rechazosSeguidos = 0;
 
         const minutosQuieto = (momento - actual.ultimoMovimiento) / 60000;
-        if (esSalto || minutosQuieto > MINUTOS_PARA_SEPARAR) {
+        if (saltoImposible || minutosQuieto > MINUTOS_PARA_SEPARAR) {
             recorridos.push(actual);
             actual = { puntos: [nuevoPunto], registros: [p], inicio: p, fin: p, ultimoMovimiento: momento };
         } else {
