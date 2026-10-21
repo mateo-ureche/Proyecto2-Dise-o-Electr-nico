@@ -13,5 +13,11 @@ function toggleSidebar() {
         titulo.style.display = "flex";
     }
 }
-
+ 
+function mostrarDatos(velocidad, distancia) {
+    document.getElementById("velocidadFlotante").textContent = "🚗 " + (velocidad ?? "--") + " km/h";
+    document.getElementById("distanciaFlotante").textContent = "📏 " + (distancia ?? "--") + " km";
+}
+ 
 window.addEventListener("scroll", () => window.scrollTo(0, 0));
+ 
