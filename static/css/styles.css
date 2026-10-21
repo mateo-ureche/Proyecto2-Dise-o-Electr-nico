@@ -39,14 +39,6 @@ body {
     border-left: 1px solid #e2e8f0;
     padding-left: 10px;
 }
-.datos-flotantes {
-    display: flex;
-    gap: 10px;
-    font-size: 12px;
-    color: #AF043C;
-    border-left: 1px solid #e2e8f0;
-    padding-left: 10px;
-}
 .titulo-flotante.modo-historico {
     background: rgba(245, 243, 255, 0.96);
     border: 1px solid #ddd6fe;
@@ -55,6 +47,43 @@ body {
     color: #6d28d9;
     font-weight: bold;
     border-left-color: #ddd6fe;
+}
+.panel-datos {
+    position: fixed;
+    top: 64px;
+    left: 48px;
+    z-index: 999;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    padding: 8px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+.dato-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 100px;
+}
+.etiqueta-panel {
+    display: block;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.valor-panel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #0f172a;
+    white-space: nowrap;
+}
+#panelVelocidad {
+    color: #AF043C;
 }
 .sidebar {
     position: fixed;
@@ -293,9 +322,7 @@ label {
     accent-color: #AF043C;
     cursor: pointer;
 }
- 
- 
- 
+
 @media (max-width: 600px) {
     .titulo-flotante {
         right: 60px;
@@ -304,10 +331,18 @@ label {
         padding: 6px 12px;
         font-size: 14px;
     }
-    .titulo-flotante .hora-flotante,
-    .datos-flotantes {
+    .titulo-flotante .hora-flotante {
         border-left: none;
         padding-left: 0;
+    }
+    .panel-datos {
+        top: 84px;
+        left: 12px;
+        right: 12px;
+        grid-template-columns: 1fr 1fr;
+    }
+    .dato-panel {
+        min-width: 0;
     }
     .barra-tiempo {
         bottom: calc(12px + env(safe-area-inset-bottom));

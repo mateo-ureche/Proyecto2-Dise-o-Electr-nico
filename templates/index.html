@@ -14,12 +14,27 @@
     <div class="titulo-flotante" id="tituloFlotante">
         📍 GPS Tracker
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
-        <span class="datos-flotantes">
-            <span id="velocidadFlotante">🚗 -- km/h</span>
-            <span id="distanciaFlotante">📏 -- km</span>
-        </span>
     </div>
  
+    <div class="panel-datos" id="panelDatos">
+        <div class="dato-panel">
+            <span class="etiqueta-panel">Velocidad</span>
+            <span class="valor-panel" id="panelVelocidad">-- km/h</span>
+        </div>
+        <div class="dato-panel">
+            <span class="etiqueta-panel">Estado</span>
+            <span class="valor-panel" id="panelEstado">---</span>
+        </div>
+        <div class="dato-panel">
+            <span class="etiqueta-panel">Distancia</span>
+            <span class="valor-panel" id="panelDistancia">-- km</span>
+        </div>
+        <div class="dato-panel">
+            <span class="etiqueta-panel" id="panelExtraEtiqueta">Última señal</span>
+            <span class="valor-panel" id="panelExtra">---</span>
+        </div>
+    </div>
+
     <div class="barra-tiempo" id="barraTiempo">
         <div class="titulo-tiempo">📍 ¿Cuándo pasó? Mueve la barra</div>
         <div class="texto-tiempo" id="textoTiempo">--/--/---- · --:--:--</div>
@@ -57,6 +72,36 @@
                 <div class="dato-item">
                     <span class="etiqueta">Hora</span>
                     <span class="valor" id="hora">---</span>
+                </div>
+            </div>
+        </div>
+ 
+        <div class="seccion">
+            <div class="seccion-titulo" id="tituloResumen">Resumen de hoy</div>
+            <div class="datos-grid">
+                <div class="dato-item">
+                    <span class="etiqueta">Vel. máxima</span>
+                    <span class="valor" id="resMaxima">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Vel. promedio</span>
+                    <span class="valor" id="resPromedio">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">En movimiento</span>
+                    <span class="valor" id="resMovimiento">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Detenido</span>
+                    <span class="valor" id="resDetenido">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Paradas</span>
+                    <span class="valor" id="resParadas">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Inició</span>
+                    <span class="valor" id="resInicio">---</span>
                 </div>
             </div>
         </div>
