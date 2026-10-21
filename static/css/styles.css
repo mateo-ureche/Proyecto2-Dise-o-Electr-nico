@@ -39,6 +39,14 @@ body {
     border-left: 1px solid #e2e8f0;
     padding-left: 10px;
 }
+.datos-flotantes {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: #AF043C;
+    border-left: 1px solid #e2e8f0;
+    padding-left: 10px;
+}
 .titulo-flotante.modo-historico {
     background: rgba(245, 243, 255, 0.96);
     border: 1px solid #ddd6fe;
@@ -285,7 +293,7 @@ label {
     accent-color: #AF043C;
     cursor: pointer;
 }
-
+ 
  
  
 @media (max-width: 600px) {
@@ -296,7 +304,8 @@ label {
         padding: 6px 12px;
         font-size: 14px;
     }
-    .titulo-flotante .hora-flotante {
+    .titulo-flotante .hora-flotante,
+    .datos-flotantes {
         border-left: none;
         padding-left: 0;
     }

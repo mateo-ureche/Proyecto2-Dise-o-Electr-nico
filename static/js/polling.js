@@ -1,5 +1,28 @@
+let lineaEnCalle = [];
+let ultimoEnCalle = null;
+let pegando = false;
+ 
+function pegarRutaEnVivo(ruta) {
+    if (pegando || ruta.length < 2) return;
+    const desde = ultimoEnCalle
+        ? ruta.findLastIndex(p => p[0] === ultimoEnCalle[0] && p[1] === ultimoEnCalle[1])
+        : -1;
+    if (desde === -1) lineaEnCalle = [];
+    const nuevos = ruta.slice(Math.max(desde, 0));
+    if (nuevos.length < 2) return;
+ 
+    pegando = true;
+    pegarACalles(nuevos).then(parte => {
+        lineaEnCalle = lineaEnCalle.concat(parte);
+        ultimoEnCalle = ruta[ruta.length - 1];
+        pegando = false;
+        if (!modoHistorico) lineaRecorrido.setLatLngs(lineaEnCalle);
+    });
+}
+ 
 function dibujarRuta(ruta) {
-    lineaRecorrido.setLatLngs(ruta);
+    if (lineaEnCalle.length === 0) lineaRecorrido.setLatLngs(ruta);
+    pegarRutaEnVivo(ruta);
     if (ruta.length > 0) {
         marcadorInicioHoy.setLatLng(ruta[0]);
         if (!mapa.hasLayer(marcadorInicioHoy)) {
@@ -7,7 +30,7 @@ function dibujarRuta(ruta) {
         }
     }
 }
-
+ 
 function actualizarRecorrido() {
     if (modoHistorico) return;
     fetch("/api/recorrido")
@@ -15,7 +38,11 @@ function actualizarRecorrido() {
         .then(puntosCrudos => {
             const ruta = construirRutaFiltrada(puntosCrudos);
             dibujarRuta(ruta);
-
+ 
+            const n = puntosCrudos.length;
+            const velocidad = n >= 2 ? velocidadKmh(puntosCrudos[n - 2], puntosCrudos[n - 1]) : null;
+            mostrarDatos(velocidad, n > 0 ? distanciaKm(ruta) : null);
+ 
             if (primeraCarga && ruta.length > 0) {
                 mapa.setView(ruta[ruta.length - 1]);
                 primeraCarga = false;
@@ -23,7 +50,7 @@ function actualizarRecorrido() {
         })
         .catch(error => console.error("Error cargando recorrido:", error));
 }
-
+ 
 function actualizarUbicacion() {
     if (modoHistorico) return;
     fetch("/api/ubicacion")
@@ -35,7 +62,7 @@ function actualizarUbicacion() {
             document.getElementById("hora").textContent = datos.hora ?? "---";
             document.getElementById("horaFlotante").textContent =
                 (datos.fecha ?? "---") + " · " + (datos.hora ?? "---");
-
+ 
             if (datos.latitud && datos.longitud) {
                 const nuevaPos = [datos.latitud, datos.longitud];
                 marcador.setLatLng(nuevaPos);
@@ -44,7 +71,7 @@ function actualizarUbicacion() {
         })
         .catch(error => console.error("Error:", error));
 }
-
+ 
 actualizarUbicacion();
 actualizarRecorrido();
 setInterval(actualizarUbicacion, 10000);
