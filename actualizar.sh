@@ -6,5 +6,6 @@ git reset --hard origin/main
 echo "Reiniciando los servicios..."
 sudo systemctl restart flaskapp.service
 sudo systemctl restart udplistener.service
+sudo systemctl restart tcplistener.service
 
 echo "Actualización completada en este servidor!"
