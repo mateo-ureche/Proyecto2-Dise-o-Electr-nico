@@ -14,13 +14,18 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.io.InputStream
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -32,12 +37,17 @@ class UbicacionService : Service() {
         private const val NOTIF_ID = 1
         private const val UDP_PORT = 5000
         private const val INTERVALO_MS = 10_000L
+        private const val PUERTO_DISPOSITIVO = 6000
+        private const val PUERTO_EVENTOS = 5001
+        private const val MAXIMO_IMAGEN = 2_000_000
     }
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val handler = Handler(Looper.getMainLooper())
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
+    private var servidorEventos: ServerSocket? = null
+    private var escuchando = false
 
     private val envioAutomatico = object : Runnable {
         override fun run() {
@@ -55,12 +65,17 @@ class UbicacionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIF_ID, construirNotificacion())
         handler.post(envioAutomatico)
+        if (!escuchando) {
+            escuchando = true
+            scope.launch { escucharDispositivo() }
+        }
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(envioAutomatico)
+        servidorEventos?.close()
         job.cancel()
     }
 
@@ -122,6 +137,102 @@ class UbicacionService : Service() {
             socket.close()
         } catch (e: Exception) {
             // El servicio no tiene pantalla propia para mostrar errores
+        }
+    }
+
+    private fun escucharDispositivo() {
+        try {
+            val servidor = ServerSocket(PUERTO_DISPOSITIVO)
+            servidorEventos = servidor
+            while (!servidor.isClosed) {
+                val cliente = servidor.accept()
+                scope.launch { atenderDispositivo(cliente) }
+            }
+        } catch (e: Exception) {
+            escuchando = false
+        }
+    }
+
+    private fun atenderDispositivo(cliente: Socket) {
+        cliente.use {
+            try {
+                cliente.soTimeout = 15_000
+                val entrada = cliente.getInputStream()
+                val partes = leerLinea(entrada).split(";")
+                if (partes.size != 5 || partes[0] != "EVENTO") throw IllegalArgumentException()
+                val tamano = partes[4].toInt()
+                if (tamano > MAXIMO_IMAGEN) throw IllegalArgumentException()
+                val imagen = leerBytes(entrada, tamano)
+
+                val location = obtenerUbicacion()
+                val latitud = location?.latitude ?: 0.0
+                val longitud = location?.longitude ?: 0.0
+                val encabezado = "EVENTO;${partes[1]};${partes[2]};${partes[3]};$latitud;$longitud;$tamano\n"
+
+                val ips = leerIps()
+                val enviados = ips.count { ip -> enviarEvento(ip, encabezado, imagen) }
+                val respuesta = if (enviados > 0) "OK $enviados/${ips.size}\n" else "ERROR\n"
+                cliente.getOutputStream().write(respuesta.toByteArray())
+            } catch (e: Exception) {
+                runCatching { cliente.getOutputStream().write("ERROR\n".toByteArray()) }
+            }
+        }
+    }
+
+    private fun leerIps(): List<String> {
+        val prefs = getSharedPreferences("gps_tracker_prefs", MODE_PRIVATE)
+        return listOf(
+            prefs.getString("ip1", "") ?: "",
+            prefs.getString("ip2", "") ?: "",
+            prefs.getString("ip3", "") ?: ""
+        ).filter { it.isNotEmpty() }
+    }
+
+    private fun obtenerUbicacion(): android.location.Location? {
+        if (ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return null
+        return try {
+            Tasks.await(fusedLocationClient.lastLocation)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun leerLinea(entrada: InputStream): String {
+        val texto = StringBuilder()
+        while (true) {
+            val byte = entrada.read()
+            if (byte == -1 || byte == '\n'.code) break
+            texto.append(byte.toChar())
+            if (texto.length > 500) throw IllegalArgumentException()
+        }
+        return texto.toString().trim()
+    }
+
+    private fun leerBytes(entrada: InputStream, tamano: Int): ByteArray {
+        val datos = ByteArray(tamano)
+        var leidos = 0
+        while (leidos < tamano) {
+            val n = entrada.read(datos, leidos, tamano - leidos)
+            if (n == -1) throw IllegalArgumentException()
+            leidos += n
+        }
+        return datos
+    }
+
+    private fun enviarEvento(ip: String, encabezado: String, imagen: ByteArray): Boolean {
+        return try {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(ip, PUERTO_EVENTOS), 5000)
+                socket.soTimeout = 10_000
+                val salida = socket.getOutputStream()
+                salida.write(encabezado.toByteArray())
+                salida.write(imagen)
+                salida.flush()
+                leerLinea(socket.getInputStream()) == "OK"
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 }
