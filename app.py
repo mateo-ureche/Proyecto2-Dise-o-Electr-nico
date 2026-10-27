@@ -152,5 +152,27 @@ def pasadas():
         ultimo = momento
     return jsonify({"pasadas": lista})
 
+@app.route("/api/eventos")
+def eventos():
+    conexion = psycopg2.connect(**DB_CONFIG)
+    cursor = conexion.cursor()
+    cursor.execute("""
+        SELECT tipo, duracion, fecha, hora, latitud, longitud, imagen
+        FROM eventos
+        WHERE propietario = %s
+        ORDER BY id DESC
+        LIMIT 50
+    """, (PROPIETARIO,))
+    filas = cursor.fetchall()
+    cursor.close()
+    conexion.close()
+
+    lista = [
+        {"tipo": f[0], "duracion": f[1], "fecha": f[2], "hora": f[3],
+         "latitud": f[4], "longitud": f[5], "imagen": f"/static/eventos/{f[6]}"}
+        for f in filas
+    ]
+    return jsonify(lista)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

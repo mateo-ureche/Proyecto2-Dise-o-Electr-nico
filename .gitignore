@@ -3,3 +3,5 @@ venv/
 __pycache__/
 *.pyc
 *.pem
+static/eventos/
+detector/face_landmarker.task
