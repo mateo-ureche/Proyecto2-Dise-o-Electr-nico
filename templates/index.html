@@ -7,39 +7,44 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/eventos.css') }}">
 </head>
 <body>
     <div id="mapa"></div>
+    <div class="aviso-evento" id="avisoEvento"></div>
+    <button class="flecha-bajar" id="flechaBajar" onclick="bajarARecorridos()" aria-label="Ver más recorridos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+    </button>
  
     <div class="titulo-flotante" id="tituloFlotante">
-        📍 GPS Tracker
+        GPS Tracker
         <span class="hora-flotante" id="horaFlotante">--/--/---- --:--:--</span>
     </div>
  
     <div class="panel-datos" id="panelDatos">
         <div class="dato-panel">
-            <span class="etiqueta-panel">Velocidad</span>
-            <span class="valor-panel" id="panelVelocidad">-- km/h</span>
+            <span class="etiqueta-panel">Atención</span>
+            <span class="valor-panel" id="panelAtencion">---</span>
+        </div>
+        <div class="dato-panel">
+            <span class="etiqueta-panel" id="panelEventosEtiqueta">Eventos hoy</span>
+            <span class="valor-panel" id="panelEventos">---</span>
+        </div>
+        <div class="dato-panel">
+            <span class="etiqueta-panel">Último evento</span>
+            <span class="valor-panel" id="panelUltimoEvento">---</span>
         </div>
         <div class="dato-panel">
             <span class="etiqueta-panel">Estado</span>
             <span class="valor-panel" id="panelEstado">---</span>
         </div>
-        <div class="dato-panel">
-            <span class="etiqueta-panel">Distancia</span>
-            <span class="valor-panel" id="panelDistancia">-- km</span>
-        </div>
-        <div class="dato-panel">
-            <span class="etiqueta-panel" id="panelExtraEtiqueta">Última señal</span>
-            <span class="valor-panel" id="panelExtra">---</span>
-        </div>
     </div>
 
     <div class="barra-tiempo" id="barraTiempo">
-        <div class="titulo-tiempo">📍 ¿Cuándo pasó? Mueve la barra</div>
+        <div class="titulo-tiempo">¿Cuándo pasó? Mueve la barra</div>
         <div class="texto-tiempo" id="textoTiempo">--/--/---- · --:--:--</div>
         <input type="range" id="sliderTiempo" min="0" max="0" value="0">
-        <button class="btn-marcar" id="btnCuandoPaso" onclick="activarModoLugar()">📍 Marcar en el mapa</button>
+        <button class="btn-marcar" id="btnCuandoPaso" onclick="activarModoLugar()">Marcar en el mapa</button>
     </div>
 
     <div class="aviso-lugar" id="avisoLugar">Toca una calle del mapa</div>
@@ -47,7 +52,7 @@
     <button class="toggle-btn" id="botonToggle" onclick="toggleSidebar()">☰</button>
  
     <div class="sidebar" id="sidebar">
-        <div class="titulo-sidebar">📍 GPS Tracker</div>
+        <div class="titulo-sidebar">GPS Tracker</div>
  
         <div class="estado-vivo">
             <span class="punto"></span>
@@ -77,37 +82,30 @@
         </div>
  
         <div class="seccion">
-            <div class="seccion-titulo" id="tituloResumen">Resumen de hoy</div>
-            <div class="datos-grid">
+            <div class="seccion-titulo" id="tituloAtencion">Atención de hoy</div>
+            <div class="puntaje-atencion nivel-bueno" id="puntajeAtencion">
+                <span class="valor-puntaje" id="valorPuntaje">100</span>
+                <span class="nivel-puntaje" id="nivelPuntaje">Atento</span>
+            </div>
+            <div class="datos-grid conteo-eventos">
                 <div class="dato-item">
-                    <span class="etiqueta">Vel. máxima</span>
-                    <span class="valor" id="resMaxima">---</span>
+                    <span class="etiqueta"><span class="punto-tipo" style="background:#dc2626"></span>Sueño</span>
+                    <span class="valor" id="cuentaSueno">0</span>
                 </div>
                 <div class="dato-item">
-                    <span class="etiqueta">Vel. promedio</span>
-                    <span class="valor" id="resPromedio">---</span>
+                    <span class="etiqueta"><span class="punto-tipo" style="background:#ea580c"></span>Distracción</span>
+                    <span class="valor" id="cuentaDistraccion">0</span>
                 </div>
                 <div class="dato-item">
-                    <span class="etiqueta">En movimiento</span>
-                    <span class="valor" id="resMovimiento">---</span>
-                </div>
-                <div class="dato-item">
-                    <span class="etiqueta">Detenido</span>
-                    <span class="valor" id="resDetenido">---</span>
-                </div>
-                <div class="dato-item">
-                    <span class="etiqueta">Paradas</span>
-                    <span class="valor" id="resParadas">---</span>
-                </div>
-                <div class="dato-item">
-                    <span class="etiqueta">Inició</span>
-                    <span class="valor" id="resInicio">---</span>
+                    <span class="etiqueta"><span class="punto-tipo" style="background:#ca8a04"></span>Bostezo</span>
+                    <span class="valor" id="cuentaBostezo">0</span>
                 </div>
             </div>
+            <div class="lista-eventos" id="listaEventos"></div>
         </div>
- 
+
         <div class="seccion">
-            <div class="seccion-titulo">🗓️ Recorrido histórico</div>
+            <div class="seccion-titulo">Recorrido histórico</div>
             <label>Desde</label>
             <input type="text" class="campo-fecha" id="fechaInicio" placeholder="Selecciona fecha y hora">
             <label>Hasta</label>
@@ -126,6 +124,7 @@
     <script src="{{ url_for('static', filename='js/historico.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lugar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
     <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
 </body>
 </html>

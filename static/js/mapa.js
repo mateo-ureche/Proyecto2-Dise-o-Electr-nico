@@ -33,16 +33,16 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.control.zoom({ position: 'topright' }).addTo(mapa);
 
 const iconoInicio = L.divIcon({
-    html: '<div style="font-size:22px; transform:translateY(-4px);">🟢</div>',
+    html: '<div class="icono-inicio"></div>',
     className: '',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
 });
 const iconoFin = L.divIcon({
-    html: '<div style="font-size:22px;">🏁</div>',
+    html: '<div class="icono-fin"></div>',
     className: '',
-    iconSize: [24, 24],
-    iconAnchor: [4, 20]
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
 });
 
 let marcador = L.marker([10.9878, -74.7889]).addTo(mapa);

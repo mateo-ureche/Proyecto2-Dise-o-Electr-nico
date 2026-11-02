@@ -119,50 +119,13 @@ function velocidadKmh(r1, r2) {
     return kmh > VELOCIDAD_MAXIMA_KMH ? null : Math.round(kmh);
 }
 
-function distanciaKm(puntos) {
-    let metros = 0;
-    for (let i = 1; i < puntos.length; i++) {
-        metros += distanciaMetrosAprox(puntos[i - 1], puntos[i]);
-    }
-    return (metros / 1000).toFixed(1).replace(".", ",");
-}
-
 const KMH_MOVIMIENTO = 3;
-const MINUTOS_PARADA = 3;
-
-function resumenRecorrido(registros) {
-    const resumen = { maxima: 0, promedio: 0, segMovimiento: 0, segDetenido: 0, paradas: 0 };
-    let metros = 0;
-    let segQuieto = 0;
-    for (let i = 1; i < registros.length; i++) {
-        const segundos = (aFecha(registros[i]) - aFecha(registros[i - 1])) / 1000;
-        const kmh = velocidadKmh(registros[i - 1], registros[i]);
-        if (segundos <= 0 || kmh === null) continue;
-        if (kmh >= KMH_MOVIMIENTO) {
-            resumen.maxima = Math.max(resumen.maxima, kmh);
-            metros += kmh / 3.6 * segundos;
-            resumen.segMovimiento += segundos;
-            segQuieto = 0;
-        } else {
-            if (segQuieto < MINUTOS_PARADA * 60 && segQuieto + segundos >= MINUTOS_PARADA * 60) resumen.paradas++;
-            segQuieto += segundos;
-            resumen.segDetenido += segundos;
-        }
-    }
-    if (resumen.segMovimiento > 0) resumen.promedio = Math.round(metros / resumen.segMovimiento * 3.6);
-    return resumen;
-}
 
 function estadoVehiculo(velocidad, segundosSinSenal) {
-    if (segundosSinSenal > 120) return "⚪ Sin señal";
-    if (velocidad === null) return "---";
-    return velocidad >= KMH_MOVIMIENTO ? "🟢 En movimiento" : "🟠 Detenido";
-}
-
-function textoDuracion(segundos) {
-    const minutos = Math.round(segundos / 60);
-    if (minutos < 60) return minutos + " min";
-    return Math.floor(minutos / 60) + " h " + (minutos % 60) + " min";
+    if (segundosSinSenal > 120) return { texto: "Sin señal", clase: "estado-sin-senal" };
+    if (velocidad === null) return { texto: "---", clase: "" };
+    if (velocidad >= KMH_MOVIMIENTO) return { texto: "En movimiento", clase: "estado-movimiento" };
+    return { texto: "Detenido", clase: "estado-detenido" };
 }
 
 function textoHace(segundos) {
