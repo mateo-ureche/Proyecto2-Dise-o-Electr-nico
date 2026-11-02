@@ -24,6 +24,7 @@ function mostrarListaRecorridos() {
         boton.onclick = () => dibujarRecorridoHistorico(i);
         lista.appendChild(boton);
     });
+    actualizarFlecha();
 }
 
 function dibujarRecorridoHistorico(indice) {
@@ -52,7 +53,6 @@ function dibujarRecorridoHistorico(indice) {
         boton.classList.toggle("activo", i === indice);
     });
 
-    mostrarResumen("Resumen del recorrido", resumenRecorrido(recorrido.registros), recorrido.inicio.hora.slice(0, 5));
     prepararBarraTiempo(indice);
 }
 
@@ -76,9 +76,7 @@ function moverPorTiempo(indice, posicion) {
     const velocidad = velocidadKmh(vecino, registro);
     document.getElementById("textoTiempo").textContent =
         registro.fecha + " · " + registro.hora + " · " + (velocidad ?? "--") + " km/h";
-    const duracion = (aFecha(recorrido.fin) - aFecha(recorrido.inicio)) / 1000;
-    mostrarPanel(velocidad, estadoVehiculo(velocidad, 0), distanciaKm(recorrido.puntos),
-                 "Duración", textoDuracion(duracion));
+    mostrarEstado(estadoVehiculo(velocidad, 0));
 }
 
 function verHistorico() {
@@ -117,12 +115,13 @@ function verHistorico() {
 
             mostrarListaRecorridos();
             dibujarRecorridoHistorico(0);
+            actualizarEventos();
 
             document.getElementById("btnTiempoReal").style.display = "block";
 
             document.getElementById("tituloFlotante").classList.add("modo-historico");
             document.getElementById("horaFlotante").textContent =
-                "📊 Histórico: " + formatoLegible(inicio) + " → " + formatoLegible(fin);
+                "Histórico: " + formatoLegible(inicio) + " → " + formatoLegible(fin);
         })
         .catch(error => console.error("Error cargando historico:", error));
 }
@@ -140,8 +139,10 @@ function volverTiempoReal() {
     document.getElementById("btnTiempoReal").style.display = "none";
     recorridosHistoricos = [];
     document.getElementById("listaRecorridos").innerHTML = "";
+    actualizarFlecha();
 
     document.getElementById("tituloFlotante").classList.remove("modo-historico");
     actualizarUbicacion();
     actualizarRecorrido();
+    actualizarEventos();
 }

@@ -44,9 +44,7 @@ function actualizarRecorrido() {
                 const ultimo = puntosCrudos[n - 1];
                 const velocidad = n >= 2 ? velocidadKmh(puntosCrudos[n - 2], ultimo) : null;
                 const segundosSinSenal = (Date.now() - aFecha(ultimo)) / 1000;
-                mostrarPanel(velocidad, estadoVehiculo(velocidad, segundosSinSenal), distanciaKm(ruta),
-                             "Última señal", textoHace(segundosSinSenal));
-                mostrarResumen("Resumen de hoy", resumenRecorrido(puntosCrudos), puntosCrudos[0].hora.slice(0, 5));
+                mostrarEstado(estadoVehiculo(velocidad, segundosSinSenal));
             }
 
             if (primeraCarga && ruta.length > 0) {

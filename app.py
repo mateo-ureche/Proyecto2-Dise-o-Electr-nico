@@ -154,22 +154,32 @@ def pasadas():
 
 @app.route("/api/eventos")
 def eventos():
+    inicio = request.args.get("inicio")
+    fin = request.args.get("fin")
+
+    if inicio and fin:
+        filtro = "TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS') BETWEEN %s::timestamp AND %s::timestamp"
+        valores = (PROPIETARIO, inicio.replace("T", " ") + ":00", fin.replace("T", " ") + ":59")
+    else:
+        filtro = "fecha = %s"
+        valores = (PROPIETARIO, (datetime.utcnow() - timedelta(hours=5)).strftime("%d/%m/%Y"))
+
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
-    cursor.execute("""
-        SELECT tipo, duracion, fecha, hora, latitud, longitud, imagen
+    cursor.execute(f"""
+        SELECT id, tipo, duracion, fecha, hora, latitud, longitud, imagen
         FROM eventos
-        WHERE propietario = %s
-        ORDER BY id DESC
-        LIMIT 50
-    """, (PROPIETARIO,))
+        WHERE propietario = %s AND {filtro}
+        ORDER BY TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS'), id
+        LIMIT 500
+    """, valores)
     filas = cursor.fetchall()
     cursor.close()
     conexion.close()
 
     lista = [
-        {"tipo": f[0], "duracion": f[1], "fecha": f[2], "hora": f[3],
-         "latitud": f[4], "longitud": f[5], "imagen": f"/static/eventos/{f[6]}"}
+        {"id": f[0], "tipo": f[1], "duracion": f[2], "fecha": f[3], "hora": f[4],
+         "latitud": f[5], "longitud": f[6], "imagen": f"/static/eventos/{f[7]}"}
         for f in filas
     ]
     return jsonify(lista)

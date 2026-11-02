@@ -14,24 +14,33 @@ function toggleSidebar() {
         titulo.style.display = "flex";
         document.getElementById("panelDatos").style.display = "grid";
     }
+    actualizarFlecha();
 }
 
-function mostrarPanel(velocidad, estado, distancia, etiquetaExtra, extra) {
-    document.getElementById("panelVelocidad").textContent = (velocidad ?? "--") + " km/h";
-    document.getElementById("panelEstado").textContent = estado;
-    document.getElementById("panelDistancia").textContent = (distancia ?? "--") + " km";
-    document.getElementById("panelExtraEtiqueta").textContent = etiquetaExtra;
-    document.getElementById("panelExtra").textContent = extra;
+function actualizarFlecha() {
+    const lista = document.getElementById("listaRecorridos");
+    const abierta = document.getElementById("sidebar").classList.contains("abierta");
+    const faltaVer = lista.children.length > 0 && lista.getBoundingClientRect().bottom > window.innerHeight;
+    document.getElementById("flechaBajar").classList.toggle("visible", abierta && faltaVer);
 }
 
-function mostrarResumen(titulo, resumen, inicio) {
-    document.getElementById("tituloResumen").textContent = titulo;
-    document.getElementById("resMaxima").textContent = resumen.maxima + " km/h";
-    document.getElementById("resPromedio").textContent = resumen.promedio + " km/h";
-    document.getElementById("resMovimiento").textContent = textoDuracion(resumen.segMovimiento);
-    document.getElementById("resDetenido").textContent = textoDuracion(resumen.segDetenido);
-    document.getElementById("resParadas").textContent = resumen.paradas;
-    document.getElementById("resInicio").textContent = inicio;
+function bajarARecorridos() {
+    const sidebar = document.getElementById("sidebar");
+    const lista = document.getElementById("listaRecorridos");
+    if (lista.getBoundingClientRect().top > window.innerHeight * 0.6) {
+        lista.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+        sidebar.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
+    }
+}
+
+document.getElementById("sidebar").addEventListener("scroll", actualizarFlecha);
+window.addEventListener("resize", actualizarFlecha);
+
+function mostrarEstado(estado) {
+    const valor = document.getElementById("panelEstado");
+    valor.textContent = estado.texto;
+    valor.className = "valor-panel " + estado.clase;
 }
 
 window.addEventListener("scroll", () => window.scrollTo(0, 0));
