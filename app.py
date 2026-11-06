@@ -26,15 +26,16 @@ def index():
 
 @app.route("/api/ubicacion")
 def ubicacion():
+    vehiculo = request.args.get("vehiculo", "1")
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
-        WHERE propietario = %s
+        WHERE propietario = %s AND vehiculo = %s
         ORDER BY id DESC
         LIMIT 1
-    """, (PROPIETARIO,))
+    """, (PROPIETARIO, vehiculo))
     resultado = cursor.fetchone()
     cursor.close()
     conexion.close()
@@ -54,6 +55,7 @@ def ubicacion():
 @app.route("/api/recorrido")
 def recorrido():
     hoy = (datetime.utcnow() - timedelta(hours=5)).strftime("%d/%m/%Y")
+    vehiculo = request.args.get("vehiculo", "1")
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
     cursor.execute("""
@@ -61,12 +63,12 @@ def recorrido():
         FROM (
             SELECT latitud, longitud, fecha, hora, id
             FROM ubicaciones
-            WHERE propietario = %s AND fecha = %s
+            WHERE propietario = %s AND fecha = %s AND vehiculo = %s
             ORDER BY id DESC
             LIMIT 500
         ) sub
         ORDER BY id ASC
-    """, (PROPIETARIO, hoy))
+    """, (PROPIETARIO, hoy, vehiculo))
     filas = cursor.fetchall()
     cursor.close()
     conexion.close()
@@ -93,7 +95,7 @@ def historico():
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
-        WHERE propietario = %s
+        WHERE propietario = %s AND vehiculo = '1'
         AND TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS')
             BETWEEN %s::timestamp AND %s::timestamp
         ORDER BY id ASC
@@ -128,7 +130,7 @@ def pasadas():
         SELECT fecha, hora, momento FROM (
             SELECT fecha, hora, latitud, longitud,
                 TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS')::timestamp AS momento
-            FROM ubicaciones WHERE propietario = %(propietario)s
+            FROM ubicaciones WHERE propietario = %(propietario)s AND vehiculo = '1'
         ) sub
         WHERE momento BETWEEN %(inicio)s AND %(fin)s
         AND 6371000 * 2 * ASIN(SQRT(

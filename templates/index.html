@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/eventos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vehiculo2.css') }}">
 </head>
 <body>
     <div id="mapa"></div>
@@ -81,6 +82,29 @@
             </div>
         </div>
  
+        <div class="seccion" id="seccionVehiculo2">
+            <div class="seccion-titulo titulo-vehiculo2">Vehículo 2</div>
+            <div class="datos-grid">
+                <div class="dato-item">
+                    <span class="etiqueta">Estado</span>
+                    <span class="valor" id="v2Estado">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Velocidad</span>
+                    <span class="valor" id="v2Velocidad">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Última señal</span>
+                    <span class="valor" id="v2Senal">---</span>
+                </div>
+                <div class="dato-item">
+                    <span class="etiqueta">Hora</span>
+                    <span class="valor" id="v2Hora">---</span>
+                </div>
+            </div>
+            <button class="btn btn-ver" onclick="verVehiculo2()">Ver en el mapa</button>
+        </div>
+
         <div class="seccion">
             <div class="seccion-titulo" id="tituloAtencion">Atención de hoy</div>
             <div class="puntaje-atencion nivel-bueno" id="puntajeAtencion">
@@ -125,6 +149,7 @@
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lugar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vehiculo2.js') }}"></script>
     <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
 </body>
 </html>
