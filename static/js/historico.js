@@ -116,6 +116,7 @@ function verHistorico() {
             mostrarListaRecorridos();
             dibujarRecorridoHistorico(0);
             actualizarEventos();
+            ocultarVehiculo2();
 
             document.getElementById("btnTiempoReal").style.display = "block";
 
@@ -145,4 +146,5 @@ function volverTiempoReal() {
     actualizarUbicacion();
     actualizarRecorrido();
     actualizarEventos();
+    actualizarVehiculo2();
 }

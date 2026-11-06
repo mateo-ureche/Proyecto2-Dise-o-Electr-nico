@@ -31,20 +31,21 @@ while True:
 
     partes = mensaje.split(";")
 
-    if len(partes) == 4 and partes[0] == "UBICACION":
-        _, fecha_hora, latitud, longitud = partes
+    if len(partes) in (4, 5) and partes[0] == "UBICACION":
+        fecha_hora, latitud, longitud = partes[1], partes[2], partes[3]
+        vehiculo = partes[4].strip() if len(partes) == 5 and partes[4].strip() else "1"
         fecha, hora = fecha_hora.split(" ")
 
         conexion = psycopg2.connect(**DB_CONFIG)
         cursor = conexion.cursor()
         cursor.execute("""
-            INSERT INTO ubicaciones (latitud, longitud, fecha, hora, propietario)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (float(latitud), float(longitud), fecha, hora, PROPIETARIO))
+            INSERT INTO ubicaciones (latitud, longitud, fecha, hora, propietario, vehiculo)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (float(latitud), float(longitud), fecha, hora, PROPIETARIO, vehiculo))
         conexion.commit()
         cursor.close()
         conexion.close()
 
-        print("Ubicación guardada.")
+        print(f"Ubicación guardada (vehículo {vehiculo}).")
     else:
         print("Formato de mensaje incorrecto.")
