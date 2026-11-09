@@ -54,6 +54,7 @@ function dibujarRecorridoHistorico(indice) {
     });
 
     prepararBarraTiempo(indice);
+    actualizarEventos();
 }
 
 function prepararBarraTiempo(indice) {
@@ -115,7 +116,6 @@ function verHistorico() {
 
             mostrarListaRecorridos();
             dibujarRecorridoHistorico(0);
-            actualizarEventos();
             ocultarVehiculo2();
 
             document.getElementById("btnTiempoReal").style.display = "block";

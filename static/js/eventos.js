@@ -143,11 +143,18 @@ function dibujarEventos(eventos) {
     if (abierto && marcadoresEventos[abierto]) marcadoresEventos[abierto].openPopup();
 }
 
+function textoParaApi(momento) {
+    const dos = n => String(n).padStart(2, "0");
+    return momento.getFullYear() + "-" + dos(momento.getMonth() + 1) + "-" + dos(momento.getDate()) +
+        "T" + dos(momento.getHours()) + ":" + dos(momento.getMinutes());
+}
+
 function rutaEventos() {
-    if (!modoHistorico) return "/api/eventos";
-    const inicio = document.getElementById("fechaInicio").value;
-    const fin = document.getElementById("fechaFin").value;
-    return "/api/eventos?inicio=" + encodeURIComponent(inicio) + "&fin=" + encodeURIComponent(fin);
+    if (!modoHistorico || !recorridoVisible) return "/api/eventos";
+    const inicio = new Date(aFecha(recorridoVisible.inicio).getTime() - 60000);
+    const fin = new Date(aFecha(recorridoVisible.fin).getTime() + 60000);
+    return "/api/eventos?inicio=" + encodeURIComponent(textoParaApi(inicio)) +
+        "&fin=" + encodeURIComponent(textoParaApi(fin));
 }
 
 function actualizarEventos() {
@@ -156,7 +163,7 @@ function actualizarEventos() {
     fetch(ruta)
         .then(r => r.json())
         .then(eventos => {
-            if (eventos.error || historico !== modoHistorico) return;
+            if (eventos.error || historico !== modoHistorico || ruta !== rutaEventos()) return;
             const firma = ruta + JSON.stringify(eventos);
             if (firma === ultimaRespuestaEventos) {
                 mostrarUltimoEvento();
@@ -164,7 +171,7 @@ function actualizarEventos() {
             }
             ultimaRespuestaEventos = firma;
             dibujarEventos(eventos);
-            mostrarAtencion(eventos, historico ? "Atención en el rango" : "Atención de hoy");
+            mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy");
             if (!historico) {
                 const nuevos = idsConocidos ? eventos.filter(e => !idsConocidos.has(e.id)) : [];
                 idsConocidos = new Set(eventos.map(e => e.id));
