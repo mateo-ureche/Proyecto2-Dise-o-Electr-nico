@@ -1,5 +1,7 @@
 const MARGEN_VISIBLE = { paddingTopLeft: [40, 90], paddingBottomRight: [40, 200] };
+const COLORES_HISTORICO = { "1": "#7c3aed", "2": "#0891b2" };
 let recorridoVisible = null;
+let vehiculoHistorico = "1";
 
 function formatoLegible(iso) {
     const [fecha, hora] = iso.split("T");
@@ -31,7 +33,9 @@ function dibujarRecorridoHistorico(indice) {
     const recorrido = recorridosHistoricos[indice];
     const ruta = recorrido.puntos;
     recorridoVisible = recorrido;
+    limpiarEventos();
 
+    lineaHistorica.setStyle({ color: COLORES_HISTORICO[vehiculoHistorico] || "#7c3aed" });
     lineaHistorica.setLatLngs(recorrido.enCalle || ruta);
     lineaHistorica.addTo(mapa);
     if (!recorrido.enCalle) {
@@ -94,7 +98,10 @@ function verHistorico() {
         return;
     }
 
-    fetch("/api/historico?inicio=" + encodeURIComponent(inicio) + "&fin=" + encodeURIComponent(fin))
+    const vehiculo = document.getElementById("vehiculoHistorico").value;
+
+    fetch("/api/historico?inicio=" + encodeURIComponent(inicio) + "&fin=" + encodeURIComponent(fin) +
+          "&vehiculo=" + vehiculo)
         .then(r => r.json())
         .then(puntosCrudos => {
             if (puntosCrudos.error) {
@@ -105,11 +112,14 @@ function verHistorico() {
             recorridosHistoricos = construirRecorridos(puntosCrudos);
 
             if (recorridosHistoricos.length === 0) {
-                alert("No hay datos guardados en ese rango de fechas.");
+                alert("No hay datos del vehículo " + vehiculo + " en ese rango de fechas.");
                 return;
             }
 
+            vehiculoHistorico = vehiculo;
             modoHistorico = true;
+            const botonLugar = document.getElementById("btnCuandoPaso");
+            if (botonLugar) botonLugar.style.display = vehiculo === "1" ? "" : "none";
             mapa.removeLayer(lineaRecorrido);
             mapa.removeLayer(marcador);
             mapa.removeLayer(marcadorInicioHoy);
@@ -122,7 +132,7 @@ function verHistorico() {
 
             document.getElementById("tituloFlotante").classList.add("modo-historico");
             document.getElementById("horaFlotante").textContent =
-                "Histórico: " + formatoLegible(inicio) + " → " + formatoLegible(fin);
+                "Histórico vehículo " + vehiculo + ": " + formatoLegible(inicio) + " → " + formatoLegible(fin);
         })
         .catch(error => console.error("Error cargando historico:", error));
 }

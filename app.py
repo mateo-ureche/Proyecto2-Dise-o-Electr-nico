@@ -89,17 +89,18 @@ def historico():
 
     inicio_sql = max(inicio.replace("T", " ") + ":00", FECHA_MINIMA.strftime("%Y-%m-%d %H:%M:%S"))
     fin_sql = fin.replace("T", " ") + ":00"
+    vehiculo = request.args.get("vehiculo", "1")
 
     conexion = psycopg2.connect(**DB_CONFIG)
     cursor = conexion.cursor()
     cursor.execute("""
         SELECT latitud, longitud, fecha, hora
         FROM ubicaciones
-        WHERE propietario = %s AND vehiculo = '1'
+        WHERE propietario = %s AND vehiculo = %s
         AND TO_TIMESTAMP(fecha || ' ' || hora, 'DD/MM/YYYY HH24:MI:SS')
             BETWEEN %s::timestamp AND %s::timestamp
         ORDER BY id ASC
-    """, (PROPIETARIO, inicio_sql, fin_sql))
+    """, (PROPIETARIO, vehiculo, inicio_sql, fin_sql))
     filas = cursor.fetchall()
     cursor.close()
     conexion.close()
