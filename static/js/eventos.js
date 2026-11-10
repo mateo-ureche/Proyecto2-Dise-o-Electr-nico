@@ -157,7 +157,26 @@ function rutaEventos() {
         "&fin=" + encodeURIComponent(textoParaApi(fin));
 }
 
+function limpiarEventos() {
+    capaEventos.clearLayers();
+    marcadoresEventos = {};
+    ultimaRespuestaEventos = "";
+}
+
 function actualizarEventos() {
+    const sinCamara = modoHistorico && vehiculoHistorico !== "1";
+    document.getElementById("puntajeAtencion").style.display = sinCamara ? "none" : "";
+    document.querySelector(".conteo-eventos").style.display = sinCamara ? "none" : "";
+    if (sinCamara) {
+        limpiarEventos();
+        mostrarAtencion([], "Vehículo " + vehiculoHistorico + ": sin cámara");
+        document.getElementById("panelAtencion").textContent = "Sin cámara";
+        document.getElementById("panelAtencion").className = "valor-panel";
+        document.getElementById("panelEventos").textContent = "--";
+        document.getElementById("panelUltimoEvento").textContent = "--";
+        document.getElementById("listaEventos").innerHTML = '<div class="sin-eventos">Este vehículo no tiene cámara</div>';
+        return;
+    }
     const ruta = rutaEventos();
     const historico = modoHistorico;
     fetch(ruta)
