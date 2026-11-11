@@ -12,13 +12,13 @@ import numpy as np
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python import vision
 
-CELULAR_IP = "192.168.43.1"
+CELULAR_IP = "10.235.192.131"
 CELULAR_PUERTO = 6000
-CAMARA = 1
+CAMARA = 0
 
 UMBRAL_OJOS = 0.5
 SEGUNDOS_SUENO = 2.0
-UMBRAL_BOCA = 0.6
+UMBRAL_BOCA = 0.4
 SEGUNDOS_BOSTEZO = 1.5
 GRADOS_GIRO = 30
 GRADOS_ARRIBA_ABAJO = 20
