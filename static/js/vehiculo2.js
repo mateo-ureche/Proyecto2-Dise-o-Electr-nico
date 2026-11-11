@@ -13,12 +13,20 @@ let marcadorVehiculo2 = L.marker([0, 0], {
     zIndexOffset: 400
 }).bindPopup("")
     .on("popupopen", () => { window.popupAbierto = true; })
-    .on("popupclose", () => { window.popupAbierto = false; });
+    .on("popupclose", () => {
+        window.popupAbierto = false;
+        viendoVehiculo2 = false;
+        actualizarBotonVehiculo();
+    });
 let ultimoVehiculo2 = null;
+let viendoVehiculo2 = false;
 
 function ocultarVehiculo2() {
     mapa.removeLayer(lineaVehiculo2);
     mapa.removeLayer(marcadorVehiculo2);
+    document.getElementById("seccionVehiculo2").style.display = "none";
+    viendoVehiculo2 = false;
+    actualizarBotonVehiculo();
 }
 
 function mostrarDatosVehiculo2(puntos) {
@@ -69,13 +77,36 @@ function actualizarVehiculo2() {
         .catch(error => console.error("Error cargando vehículo 2:", error));
 }
 
-function verVehiculo2() {
-    if (!ultimoVehiculo2) return;
+function actualizarBotonVehiculo() {
+    document.getElementById("btnVerVehiculo").textContent =
+        viendoVehiculo2 ? "Ver vehículo 1" : "Ver en el mapa";
+}
+
+function cerrarMenuEnCelular() {
     if (window.innerWidth <= 600 && document.getElementById("sidebar").classList.contains("abierta")) {
         toggleSidebar();
     }
+}
+
+function verVehiculo1() {
+    viendoVehiculo2 = false;
+    marcadorVehiculo2.closePopup();
+    cerrarMenuEnCelular();
+    mapa.setView(marcador.getLatLng(), 16);
+    actualizarBotonVehiculo();
+}
+
+function verVehiculo2() {
+    if (viendoVehiculo2) {
+        verVehiculo1();
+        return;
+    }
+    if (!ultimoVehiculo2) return;
+    cerrarMenuEnCelular();
     mapa.setView(ultimoVehiculo2, 16);
     marcadorVehiculo2.openPopup();
+    viendoVehiculo2 = true;
+    actualizarBotonVehiculo();
 }
 
 actualizarVehiculo2();
