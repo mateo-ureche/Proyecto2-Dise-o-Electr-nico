@@ -4,8 +4,9 @@ import socket
 import sys
 import time
 import urllib.request
+import ssl
 from datetime import datetime
- 
+ssl._create_default_https_context = ssl._create_unverified_context
 PUERTO = 5000
 VEHICULO = "2"
 SEGUNDOS_ENTRE_ENVIOS = 5
