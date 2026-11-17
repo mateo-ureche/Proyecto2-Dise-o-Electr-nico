@@ -2,6 +2,7 @@ const MARGEN_VISIBLE = { paddingTopLeft: [40, 90], paddingBottomRight: [40, 200]
 const COLORES_HISTORICO = { "1": "#7c3aed", "2": "#0891b2" };
 let recorridoVisible = null;
 let vehiculoHistorico = "1";
+let registroTiempoActual = null;
 
 function formatoLegible(iso) {
     const [fecha, hora] = iso.split("T");
@@ -13,16 +14,14 @@ function mostrarListaRecorridos() {
     const lista = document.getElementById("listaRecorridos");
     lista.innerHTML = "";
     if (recorridosHistoricos.length < 2) return;
-
     const titulo = document.createElement("div");
     titulo.className = "lista-titulo";
     titulo.textContent = "Se encontraron " + recorridosHistoricos.length + " recorridos. Elige uno:";
     lista.appendChild(titulo);
-
     recorridosHistoricos.forEach((r, i) => {
         const boton = document.createElement("button");
         boton.className = "item-recorrido";
-        boton.textContent = (i + 1) + ". " + textoRecorrido(r);
+        boton.textContent = "Recorrido #" + (i + 1) + " · " + textoRecorrido(r);
         boton.onclick = () => dibujarRecorridoHistorico(i);
         lista.appendChild(boton);
     });
@@ -35,6 +34,15 @@ function dibujarRecorridoHistorico(indice) {
     recorridoVisible = recorrido;
     limpiarEventos();
 
+    const infoBox = document.getElementById("infoRecorridoActivo");
+    if (infoBox) {
+        infoBox.style.display = "block";
+        infoBox.innerHTML =
+            "<strong>Recorrido #" + (indice + 1) + " de " + recorridosHistoricos.length +
+            " (Vehículo " + vehiculoHistorico + ")</strong><br>" +
+            textoRecorrido(recorrido);
+    }
+
     lineaHistorica.setStyle({ color: COLORES_HISTORICO[vehiculoHistorico] || "#7c3aed" });
     lineaHistorica.setLatLngs(recorrido.enCalle || ruta);
     lineaHistorica.addTo(mapa);
@@ -44,19 +52,14 @@ function dibujarRecorridoHistorico(indice) {
             if (modoHistorico && recorridoVisible === recorrido) lineaHistorica.setLatLngs(linea);
         });
     }
-
     marcadorInicioHist.setLatLng(ruta[0]);
     marcadorInicioHist.addTo(mapa);
-
     marcadorFinHist.setLatLng(ruta[ruta.length - 1]);
     marcadorFinHist.addTo(mapa);
-
     mapa.fitBounds(lineaHistorica.getBounds(), MARGEN_VISIBLE);
-
     document.querySelectorAll(".item-recorrido").forEach((boton, i) => {
         boton.classList.toggle("activo", i === indice);
     });
-
     prepararBarraTiempo(indice);
     actualizarEventos();
 }
@@ -74,32 +77,39 @@ function prepararBarraTiempo(indice) {
 function moverPorTiempo(indice, posicion) {
     const recorrido = recorridosHistoricos[indice];
     const registro = recorrido.registros[posicion];
+    registroTiempoActual = registro;
+
     marcadorTiempo.setLatLng(recorrido.puntos[posicion]);
     marcadorTiempo.bringToFront();
     mapa.panInside(recorrido.puntos[posicion], MARGEN_VISIBLE);
+
     const vecino = recorrido.registros[posicion === 0 ? 1 : posicion - 1];
     const velocidad = velocidadKmh(vecino, registro);
-    document.getElementById("textoTiempo").textContent =
-        registro.fecha + " · " + registro.hora + " · " + (velocidad ?? "--") + " km/h";
+
+    const textoBase = registro.fecha + " · " + registro.hora + " · " + (velocidad ?? "--") + " km/h";
+    if (vehiculoHistorico === "1") {
+        document.getElementById("textoTiempo").innerHTML =
+            textoBase + ' · <span id="puntajeTiempo" class="puntaje-tiempo">100/100</span>';
+        actualizarAtencionHasta(registro);
+    } else {
+        document.getElementById("textoTiempo").textContent = textoBase;
+    }
+
     mostrarEstado(estadoVehiculo(velocidad, 0));
 }
 
 function verHistorico() {
     const inicio = document.getElementById("fechaInicio").value;
     const fin = document.getElementById("fechaFin").value;
-
     if (!inicio || !fin) {
         alert("Selecciona una fecha de inicio y una de fin.");
         return;
     }
-
     if (fin <= inicio) {
         alert("La fecha final debe ser después de la inicial.");
         return;
     }
-
     const vehiculo = document.getElementById("vehiculoHistorico").value;
-
     fetch("/api/historico?inicio=" + encodeURIComponent(inicio) + "&fin=" + encodeURIComponent(fin) +
           "&vehiculo=" + vehiculo)
         .then(r => r.json())
@@ -108,14 +118,11 @@ function verHistorico() {
                 alert(puntosCrudos.error);
                 return;
             }
-
             recorridosHistoricos = construirRecorridos(puntosCrudos);
-
             if (recorridosHistoricos.length === 0) {
                 alert("No hay datos del vehículo " + vehiculo + " en ese rango de fechas.");
                 return;
             }
-
             vehiculoHistorico = vehiculo;
             modoHistorico = true;
             const botonLugar = document.getElementById("btnCuandoPaso");
@@ -123,13 +130,10 @@ function verHistorico() {
             mapa.removeLayer(lineaRecorrido);
             mapa.removeLayer(marcador);
             mapa.removeLayer(marcadorInicioHoy);
-
             mostrarListaRecorridos();
             dibujarRecorridoHistorico(0);
             ocultarVehiculo2();
-
             document.getElementById("btnTiempoReal").style.display = "block";
-
             document.getElementById("tituloFlotante").classList.add("modo-historico");
             document.getElementById("horaFlotante").textContent =
                 "Histórico vehículo " + vehiculo + ": " + formatoLegible(inicio) + " → " + formatoLegible(fin);
@@ -140,18 +144,21 @@ function verHistorico() {
 function volverTiempoReal() {
     if (modoLugar) terminarModoLugar();
     modoHistorico = false;
+    registroTiempoActual = null;
+    recorridoVisible = null;
     mapa.removeLayer(lineaHistorica);
     mapa.removeLayer(marcadorInicioHist);
     mapa.removeLayer(marcadorFinHist);
     mapa.removeLayer(marcadorTiempo);
     document.getElementById("barraTiempo").style.display = "none";
+    const infoBox = document.getElementById("infoRecorridoActivo");
+    if (infoBox) infoBox.style.display = "none";
     lineaRecorrido.addTo(mapa);
     marcador.addTo(mapa);
     document.getElementById("btnTiempoReal").style.display = "none";
     recorridosHistoricos = [];
     document.getElementById("listaRecorridos").innerHTML = "";
     actualizarFlecha();
-
     document.getElementById("tituloFlotante").classList.remove("modo-historico");
     actualizarUbicacion();
     actualizarRecorrido();

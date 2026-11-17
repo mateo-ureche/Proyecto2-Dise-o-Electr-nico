@@ -14,6 +14,7 @@ let marcadoresEventos = {};
 let ultimaRespuestaEventos = "";
 let idsConocidos = null;
 let ultimoEvento = null;
+let eventosRecorridoActual = [];
 
 function datosTipo(tipo) {
     return TIPOS_EVENTO[tipo] || OTRO_EVENTO;
@@ -161,6 +162,24 @@ function limpiarEventos() {
     capaEventos.clearLayers();
     marcadoresEventos = {};
     ultimaRespuestaEventos = "";
+    eventosRecorridoActual = [];
+}
+
+function actualizarAtencionHasta(registro) {
+    if (!modoHistorico || vehiculoHistorico !== "1") return;
+    const limiteMs = aFecha(registro).getTime();
+    const ocurridosHastaAhora = eventosRecorridoActual.filter(e => aFecha(e).getTime() <= limiteMs);
+
+    dibujarEventos(ocurridosHastaAhora);
+    mostrarAtencion(ocurridosHastaAhora, "Atención en este momento");
+
+    const puntaje = calcularPuntaje(ocurridosHastaAhora);
+    const nivel = nivelPuntaje(puntaje);
+    const badgeTiempo = document.getElementById("puntajeTiempo");
+    if (badgeTiempo) {
+        badgeTiempo.textContent = puntaje + "/100 · " + nivel.texto;
+        badgeTiempo.className = "puntaje-tiempo " + nivel.clase;
+    }
 }
 
 function actualizarEventos() {
@@ -189,8 +208,15 @@ function actualizarEventos() {
                 return;
             }
             ultimaRespuestaEventos = firma;
-            dibujarEventos(eventos);
-            mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy");
+            eventosRecorridoActual = eventos;
+
+            if (historico && typeof registroTiempoActual !== "undefined" && registroTiempoActual) {
+                actualizarAtencionHasta(registroTiempoActual);
+            } else {
+                dibujarEventos(eventos);
+                mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy");
+            }
+
             if (!historico) {
                 const nuevos = idsConocidos ? eventos.filter(e => !idsConocidos.has(e.id)) : [];
                 idsConocidos = new Set(eventos.map(e => e.id));

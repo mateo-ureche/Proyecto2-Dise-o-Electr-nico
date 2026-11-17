@@ -105,8 +105,25 @@
             <button class="btn btn-ver" id="btnVerVehiculo" onclick="verVehiculo2()">Ver en el mapa</button>
         </div>
 
-        <div class="seccion">
+        <div class="seccion" id="seccionHistorico">
+            <div class="seccion-titulo">Recorrido histórico</div>
+            <label>Vehículo</label>
+            <select class="campo-fecha" id="vehiculoHistorico">
+                <option value="1">Vehículo 1</option>
+                <option value="2">Vehículo 2</option>
+            </select>
+            <label>Desde</label>
+            <input type="text" class="campo-fecha" id="fechaInicio" placeholder="Selecciona fecha y hora">
+            <label>Hasta</label>
+            <input type="text" class="campo-fecha" id="fechaFin" placeholder="Selecciona fecha y hora">
+            <button class="btn btn-ver" onclick="verHistorico()">Ver recorrido</button>
+            <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
+            <div class="lista-recorridos" id="listaRecorridos"></div>
+        </div>
+
+        <div class="seccion" id="seccionAtencion">
             <div class="seccion-titulo" id="tituloAtencion">Atención de hoy</div>
+            <div class="info-recorrido-activo" id="infoRecorridoActivo" style="display:none;"></div>
             <div class="puntaje-atencion nivel-bueno" id="puntajeAtencion">
                 <span class="valor-puntaje" id="valorPuntaje">100</span>
                 <span class="nivel-puntaje" id="nivelPuntaje">Atento</span>
@@ -127,34 +144,8 @@
             </div>
             <div class="lista-eventos" id="listaEventos"></div>
         </div>
-
-        <div class="seccion">
-            <div class="seccion-titulo">Recorrido histórico</div>
-            <label>Vehículo</label>
-            <select class="campo-fecha" id="vehiculoHistorico">
-                <option value="1">Vehículo 1</option>
-                <option value="2">Vehículo 2</option>
-            </select>
-            <label>Desde</label>
-            <input type="text" class="campo-fecha" id="fechaInicio" placeholder="Selecciona fecha y hora">
-            <label>Hasta</label>
-            <input type="text" class="campo-fecha" id="fechaFin" placeholder="Selecciona fecha y hora">
-            <button class="btn btn-ver" onclick="verHistorico()">Ver recorrido</button>
-            <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
-            <div class="lista-recorridos" id="listaRecorridos"></div>
-        </div>
     </div>
  
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.js"></script>
-    <script src="{{ url_for('static', filename='js/mapa.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/rutas.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/historico.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/lugar.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/eventos.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/vehiculo2.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
-</body>
-</html>
+    <script src="
