@@ -63,6 +63,23 @@
     border-radius: 8px;
     display: block;
 }
+.info-recorrido-activo {
+    background: rgba(255, 255, 255, 0.16);
+    border-left: 3px solid #ffffff;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+.puntaje-tiempo {
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    display: inline-block;
+}
 .puntaje-atencion {
     display: flex;
     align-items: baseline;
