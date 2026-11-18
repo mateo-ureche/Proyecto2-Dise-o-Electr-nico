@@ -4,7 +4,9 @@ const TIPOS_EVENTO = {
     distraccion: { nombre: "Distracción", color: "#ea580c", resta: 8,
         dibujo: '<path d="M4 12 Q12 5 20 12 Q12 19 4 12 Z" /><circle cx="15" cy="12" r="2.2" fill="#ffffff" />' },
     bostezo: { nombre: "Bostezo", color: "#ca8a04", resta: 4,
-        dibujo: '<ellipse cx="12" cy="13" rx="4" ry="5" />' }
+        dibujo: '<ellipse cx="12" cy="13" rx="4" ry="5" />' },
+    sin_cinturon: { nombre: "Sin cinturón", color: "#7c3aed", resta: 10,
+        dibujo: '<line x1="6" y1="5" x2="18" y2="19" /><rect x="9.5" y="9.5" width="5" height="5" rx="1" fill="#7c3aed" />' }
 };
 const OTRO_EVENTO = { nombre: "Evento", color: "#64748b", resta: 0,
     dibujo: '<line x1="12" y1="6" x2="12" y2="14" /><circle cx="12" cy="18" r="1" fill="#ffffff" />' };
@@ -87,7 +89,7 @@ function renderizarGruposEventos(eventos) {
     }
 
     const variosDias = eventos[0].fecha !== eventos[eventos.length - 1].fecha;
-    const categorias = ["sueno", "distraccion", "bostezo"];
+    const categorias = ["sueno", "distraccion", "bostezo", "sin_cinturon"];
 
     categorias.forEach(tipo => {
         const delTipo = eventos.filter(e => e.tipo === tipo);
@@ -146,6 +148,7 @@ function mostrarAtencion(eventosPuntaje, titulo, eventosLista) {
     document.getElementById("cuentaSueno").textContent = contar("sueno");
     document.getElementById("cuentaDistraccion").textContent = contar("distraccion");
     document.getElementById("cuentaBostezo").textContent = contar("bostezo");
+    document.getElementById("cuentaSinCinturon").textContent = contar("sin_cinturon");
 
     renderizarGruposEventos(listaParaMostrar);
 }
@@ -234,7 +237,6 @@ function actualizarAtencionHasta(registro) {
     const limiteMs = aFecha(registro).getTime();
     const ocurridosHastaAhora = eventosRecorridoActual.filter(e => aFecha(e).getTime() <= limiteMs);
 
-    // Mantiene TODOS los eventos visibles en el mapa y lista, pero actualiza el puntaje al instante del slider
     mostrarAtencion(ocurridosHastaAhora, "Atención en este momento", eventosRecorridoActual);
 
     const puntaje = calcularPuntaje(ocurridosHastaAhora);
@@ -274,7 +276,6 @@ function actualizarEventos() {
             ultimaRespuestaEventos = firma;
             eventosRecorridoActual = eventos;
 
-            // Siempre dibuja todos los eventos de la ruta en el mapa
             dibujarEventos(eventos);
 
             if (historico && typeof registroTiempoActual !== "undefined" && registroTiempoActual) {
