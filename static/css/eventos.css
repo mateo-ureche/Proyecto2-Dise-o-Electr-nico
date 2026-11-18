@@ -107,7 +107,7 @@
 .nivel-medio { color: #ea580c; }
 .nivel-malo { color: #dc2626; }
 .conteo-eventos {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
 }
 .lista-eventos {
     margin-top: 10px;
