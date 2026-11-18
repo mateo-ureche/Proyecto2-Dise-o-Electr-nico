@@ -68,20 +68,25 @@ function prepararBarraTiempo(indice) {
     const slider = document.getElementById("sliderTiempo");
     slider.max = recorridosHistoricos[indice].puntos.length - 1;
     slider.value = 0;
-    slider.oninput = () => moverPorTiempo(indice, Number(slider.value));
+    slider.oninput = () => moverPorTiempo(indice, Number(slider.value), true);
     document.getElementById("barraTiempo").style.display = "block";
     marcadorTiempo.addTo(mapa);
-    moverPorTiempo(indice, 0);
+    moverPorTiempo(indice, 0, false);
 }
 
-function moverPorTiempo(indice, posicion) {
+function moverPorTiempo(indice, posicion, centrar = true) {
     const recorrido = recorridosHistoricos[indice];
     const registro = recorrido.registros[posicion];
     registroTiempoActual = registro;
 
-    marcadorTiempo.setLatLng(recorrido.puntos[posicion]);
+    const coord = recorrido.puntos[posicion];
+    marcadorTiempo.setLatLng(coord);
     marcadorTiempo.bringToFront();
-    mapa.panInside(recorrido.puntos[posicion], MARGEN_VISIBLE);
+
+    // Mantiene el punto siempre centrado en el mapa al mover el slider
+    if (centrar) {
+        mapa.panTo(coord, { animate: true, duration: 0.25 });
+    }
 
     const vecino = recorrido.registros[posicion === 0 ? 1 : posicion - 1];
     const velocidad = velocidadKmh(vecino, registro);

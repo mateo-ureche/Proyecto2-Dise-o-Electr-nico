@@ -111,20 +111,54 @@
 }
 .lista-eventos {
     margin-top: 10px;
-    max-height: 220px;
+}
+.grupo-evento {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    overflow: hidden;
+}
+.grupo-evento-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffffff;
+    cursor: pointer;
+    list-style: none;
+}
+.grupo-evento-titulo::-webkit-details-marker {
+    display: none;
+}
+.grupo-evento-badge {
+    background: rgba(255, 255, 255, 0.22);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+.grupo-evento-lista {
+    padding: 4px 8px 6px;
+    max-height: 150px;
     overflow-y: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 .item-evento {
     width: 100%;
     text-align: left;
-    padding: 7px 10px;
-    margin-bottom: 5px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    background: rgba(255,255,255,0.12);
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
     color: white;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
+}
+.item-evento:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 .sin-eventos {
     font-size: 12px;

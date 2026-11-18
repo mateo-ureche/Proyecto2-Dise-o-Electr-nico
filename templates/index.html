@@ -105,22 +105,7 @@
             <button class="btn btn-ver" id="btnVerVehiculo" onclick="verVehiculo2()">Ver en el mapa</button>
         </div>
 
-        <div class="seccion" id="seccionHistorico">
-            <div class="seccion-titulo">Recorrido histórico</div>
-            <label>Vehículo</label>
-            <select class="campo-fecha" id="vehiculoHistorico">
-                <option value="1">Vehículo 1</option>
-                <option value="2">Vehículo 2</option>
-            </select>
-            <label>Desde</label>
-            <input type="text" class="campo-fecha" id="fechaInicio" placeholder="Selecciona fecha y hora">
-            <label>Hasta</label>
-            <input type="text" class="campo-fecha" id="fechaFin" placeholder="Selecciona fecha y hora">
-            <button class="btn btn-ver" onclick="verHistorico()">Ver recorrido</button>
-            <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
-            <div class="lista-recorridos" id="listaRecorridos"></div>
-        </div>
-
+        <!-- PUNTAJE ARRIBA DEL RECORRIDO HISTÓRICO -->
         <div class="seccion" id="seccionAtencion">
             <div class="seccion-titulo" id="tituloAtencion">Atención de hoy</div>
             <div class="info-recorrido-activo" id="infoRecorridoActivo" style="display:none;"></div>
@@ -143,6 +128,22 @@
                 </div>
             </div>
             <div class="lista-eventos" id="listaEventos"></div>
+        </div>
+
+        <div class="seccion" id="seccionHistorico">
+            <div class="seccion-titulo">Recorrido histórico</div>
+            <label>Vehículo</label>
+            <select class="campo-fecha" id="vehiculoHistorico">
+                <option value="1">Vehículo 1</option>
+                <option value="2">Vehículo 2</option>
+            </select>
+            <label>Desde</label>
+            <input type="text" class="campo-fecha" id="fechaInicio" placeholder="Selecciona fecha y hora">
+            <label>Hasta</label>
+            <input type="text" class="campo-fecha" id="fechaFin" placeholder="Selecciona fecha y hora">
+            <button class="btn btn-ver" onclick="verHistorico()">Ver recorrido</button>
+            <button class="btn btn-volver" id="btnTiempoReal" onclick="volverTiempoReal()">Volver a tiempo real</button>
+            <div class="lista-recorridos" id="listaRecorridos"></div>
         </div>
     </div>
  
