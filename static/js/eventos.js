@@ -15,6 +15,7 @@ let ultimaRespuestaEventos = "";
 let idsConocidos = null;
 let ultimoEvento = null;
 let eventosRecorridoActual = [];
+let gruposAbiertos = {};
 
 function datosTipo(tipo) {
     return TIPOS_EVENTO[tipo] || OTRO_EVENTO;
@@ -76,8 +77,57 @@ function mostrarUltimoEvento() {
     valor.style.color = datosTipo(ultimoEvento.tipo).color;
 }
 
-function mostrarAtencion(eventos, titulo) {
-    const puntaje = calcularPuntaje(eventos);
+function renderizarGruposEventos(eventos) {
+    const lista = document.getElementById("listaEventos");
+    lista.innerHTML = "";
+    if (eventos.length === 0) {
+        lista.innerHTML = '<div class="sin-eventos">Sin eventos</div>';
+        actualizarFlecha();
+        return;
+    }
+
+    const variosDias = eventos[0].fecha !== eventos[eventos.length - 1].fecha;
+    const categorias = ["sueno", "distraccion", "bostezo"];
+
+    categorias.forEach(tipo => {
+        const delTipo = eventos.filter(e => e.tipo === tipo);
+        if (delTipo.length === 0) return;
+
+        const datos = datosTipo(tipo);
+        const grupo = document.createElement("details");
+        grupo.className = "grupo-evento";
+        if (gruposAbiertos[tipo]) grupo.open = true;
+        grupo.ontoggle = () => { gruposAbiertos[tipo] = grupo.open; };
+
+        const resumen = document.createElement("summary");
+        resumen.className = "grupo-evento-titulo";
+        resumen.innerHTML =
+            '<span>' + puntoColor(tipo) + datos.nombre + '</span>' +
+            '<span class="grupo-evento-badge">' + delTipo.length + '</span>';
+        grupo.appendChild(resumen);
+
+        const contenedorItems = document.createElement("div");
+        contenedorItems.className = "grupo-evento-lista";
+
+        delTipo.forEach(e => {
+            const boton = document.createElement("button");
+            boton.className = "item-evento";
+            boton.innerHTML = e.hora + (variosDias ? " · " + e.fecha.slice(0, 5) : "") +
+                ' <span style="opacity:0.75;">(' + Number(e.duracion).toFixed(1) + 's)</span>';
+            boton.onclick = () => abrirEvento(e.id);
+            contenedorItems.appendChild(boton);
+        });
+
+        grupo.appendChild(contenedorItems);
+        lista.appendChild(grupo);
+    });
+
+    actualizarFlecha();
+}
+
+function mostrarAtencion(eventosPuntaje, titulo, eventosLista) {
+    const listaParaMostrar = eventosLista || eventosPuntaje;
+    const puntaje = calcularPuntaje(eventosPuntaje);
     const nivel = nivelPuntaje(puntaje);
     document.getElementById("tituloAtencion").textContent = titulo;
     document.getElementById("puntajeAtencion").className = "puntaje-atencion " + nivel.clase;
@@ -87,36 +137,47 @@ function mostrarAtencion(eventos, titulo) {
     const panel = document.getElementById("panelAtencion");
     panel.textContent = puntaje + " · " + nivel.texto;
     panel.className = "valor-panel " + nivel.clase;
-    document.getElementById("panelEventosEtiqueta").textContent = modoHistorico ? "Eventos" : "Eventos hoy";
-    document.getElementById("panelEventos").textContent = eventos.length;
-    ultimoEvento = eventos.length > 0 ? eventos[eventos.length - 1] : null;
+    document.getElementById("panelEventosEtiqueta").textContent = modoHistorico ? "Eventos ruta" : "Eventos hoy";
+    document.getElementById("panelEventos").textContent = listaParaMostrar.length;
+    ultimoEvento = eventosPuntaje.length > 0 ? eventosPuntaje[eventosPuntaje.length - 1] : null;
     mostrarUltimoEvento();
 
-    const contar = tipo => eventos.filter(e => e.tipo === tipo).length;
+    const contar = tipo => listaParaMostrar.filter(e => e.tipo === tipo).length;
     document.getElementById("cuentaSueno").textContent = contar("sueno");
     document.getElementById("cuentaDistraccion").textContent = contar("distraccion");
     document.getElementById("cuentaBostezo").textContent = contar("bostezo");
 
-    const lista = document.getElementById("listaEventos");
-    lista.innerHTML = "";
-    if (eventos.length === 0) {
-        lista.innerHTML = '<div class="sin-eventos">Sin eventos</div>';
-        actualizarFlecha();
-        return;
-    }
-    const variosDias = eventos[0].fecha !== eventos[eventos.length - 1].fecha;
-    eventos.forEach(e => {
-        const boton = document.createElement("button");
-        boton.className = "item-evento";
-        boton.innerHTML = puntoColor(e.tipo) + e.hora.slice(0, 5) + "  " + datosTipo(e.tipo).nombre +
-            (variosDias ? " · " + e.fecha.slice(0, 5) : "");
-        boton.onclick = () => abrirEvento(e.id);
-        lista.appendChild(boton);
+    renderizarGruposEventos(listaParaMostrar);
+}
+
+function seleccionarEventoEnHistorico(evento) {
+    if (!modoHistorico || !recorridoVisible || !evento) return;
+    const targetMs = aFecha(evento).getTime();
+    let mejorPos = 0;
+    let menorDiff = Infinity;
+
+    recorridoVisible.registros.forEach((reg, idx) => {
+        const diff = Math.abs(aFecha(reg).getTime() - targetMs);
+        if (diff < menorDiff) {
+            menorDiff = diff;
+            mejorPos = idx;
+        }
     });
-    actualizarFlecha();
+
+    const slider = document.getElementById("sliderTiempo");
+    const indiceRec = recorridosHistoricos.indexOf(recorridoVisible);
+    if (slider && indiceRec !== -1) {
+        slider.value = mejorPos;
+        moverPorTiempo(indiceRec, mejorPos, false);
+    }
 }
 
 function abrirEvento(id) {
+    const evento = eventosRecorridoActual.find(e => e.id === id);
+    if (evento && modoHistorico) {
+        seleccionarEventoEnHistorico(evento);
+    }
+
     const marcadorEvento = marcadoresEventos[id];
     if (!marcadorEvento) {
         alert("Este evento no tiene ubicación GPS.");
@@ -136,6 +197,9 @@ function dibujarEventos(eventos) {
     eventos.filter(tieneUbicacion).forEach(e => {
         const marcadorEvento = L.marker([e.latitud, e.longitud], { icon: iconoEvento(e.tipo), zIndexOffset: 500 })
             .bindPopup(textoPopupEvento(e), { maxWidth: 260 })
+            .on("click", () => {
+                if (modoHistorico) seleccionarEventoEnHistorico(e);
+            })
             .on("popupopen", () => { window.popupAbierto = true; })
             .on("popupclose", () => { window.popupAbierto = false; });
         marcadorEvento.addTo(capaEventos);
@@ -170,8 +234,8 @@ function actualizarAtencionHasta(registro) {
     const limiteMs = aFecha(registro).getTime();
     const ocurridosHastaAhora = eventosRecorridoActual.filter(e => aFecha(e).getTime() <= limiteMs);
 
-    dibujarEventos(ocurridosHastaAhora);
-    mostrarAtencion(ocurridosHastaAhora, "Atención en este momento");
+    // Mantiene TODOS los eventos visibles en el mapa y lista, pero actualiza el puntaje al instante del slider
+    mostrarAtencion(ocurridosHastaAhora, "Atención en este momento", eventosRecorridoActual);
 
     const puntaje = calcularPuntaje(ocurridosHastaAhora);
     const nivel = nivelPuntaje(puntaje);
@@ -188,7 +252,7 @@ function actualizarEventos() {
     document.querySelector(".conteo-eventos").style.display = sinCamara ? "none" : "";
     if (sinCamara) {
         limpiarEventos();
-        mostrarAtencion([], "Vehículo " + vehiculoHistorico + ": sin cámara");
+        mostrarAtencion([], "Vehículo " + vehiculoHistorico + ": sin cámara", []);
         document.getElementById("panelAtencion").textContent = "Sin cámara";
         document.getElementById("panelAtencion").className = "valor-panel";
         document.getElementById("panelEventos").textContent = "--";
@@ -210,11 +274,13 @@ function actualizarEventos() {
             ultimaRespuestaEventos = firma;
             eventosRecorridoActual = eventos;
 
+            // Siempre dibuja todos los eventos de la ruta en el mapa
+            dibujarEventos(eventos);
+
             if (historico && typeof registroTiempoActual !== "undefined" && registroTiempoActual) {
                 actualizarAtencionHasta(registroTiempoActual);
             } else {
-                dibujarEventos(eventos);
-                mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy");
+                mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy", eventos);
             }
 
             if (!historico) {
