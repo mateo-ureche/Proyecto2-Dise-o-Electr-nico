@@ -199,7 +199,7 @@ function dibujarEventos(eventos) {
     marcadoresEventos = {};
     eventos.filter(tieneUbicacion).forEach(e => {
         const marcadorEvento = L.marker([e.latitud, e.longitud], { icon: iconoEvento(e.tipo), zIndexOffset: 500 })
-            .bindPopup(textoPopupEvento(e), { maxWidth: 260 })
+            .bindPopup(textoPopupEvento(e), { maxWidth: 260, autoPan: false })
             .on("click", () => {
                 if (modoHistorico) seleccionarEventoEnHistorico(e);
             })
@@ -230,6 +230,9 @@ function limpiarEventos() {
     marcadoresEventos = {};
     ultimaRespuestaEventos = "";
     eventosRecorridoActual = [];
+    if (typeof ocultarPreviewEventoSlider === "function") {
+        ocultarPreviewEventoSlider();
+    }
 }
 
 function actualizarAtencionHasta(registro) {
@@ -280,6 +283,9 @@ function actualizarEventos() {
 
             if (historico && typeof registroTiempoActual !== "undefined" && registroTiempoActual) {
                 actualizarAtencionHasta(registroTiempoActual);
+                if (typeof sincronizarEventoConSlider === "function") {
+                    sincronizarEventoConSlider(registroTiempoActual);
+                }
             } else {
                 mostrarAtencion(eventos, historico ? "Atención del recorrido" : "Atención de hoy", eventos);
             }
@@ -302,6 +308,70 @@ function avisarEventoNuevo(e) {
     aviso.onclick = () => abrirEvento(e.id);
     clearTimeout(aviso.temporizador);
     aviso.temporizador = setTimeout(() => aviso.classList.remove("visible"), 8000);
+}
+
+let eventoActivoSliderId = null;
+
+function ocultarPreviewEventoSlider() {
+    const caja = document.getElementById("previewEventoSlider");
+    if (caja) {
+        caja.style.display = "none";
+        caja.innerHTML = "";
+    }
+    if (eventoActivoSliderId && marcadoresEventos[eventoActivoSliderId]) {
+        marcadoresEventos[eventoActivoSliderId].closePopup();
+    }
+    eventoActivoSliderId = null;
+}
+
+function sincronizarEventoConSlider(registro) {
+    const caja = document.getElementById("previewEventoSlider");
+    if (!caja || !modoHistorico || vehiculoHistorico !== "1" || !registro || eventosRecorridoActual.length === 0) {
+        ocultarPreviewEventoSlider();
+        return;
+    }
+
+    const UMBRAL_MS = 12000; // Ventana de ±12 segundos alrededor del evento
+    const actualMs = aFecha(registro).getTime();
+
+    let eventoCercano = null;
+    let menorDiff = Infinity;
+
+    eventosRecorridoActual.forEach(e => {
+        const diff = Math.abs(aFecha(e).getTime() - actualMs);
+        if (diff <= UMBRAL_MS && diff < menorDiff) {
+            menorDiff = diff;
+            eventoCercano = e;
+        }
+    });
+
+    if (!eventoCercano) {
+        ocultarPreviewEventoSlider();
+        return;
+    }
+
+    if (eventoActivoSliderId === eventoCercano.id) return;
+    eventoActivoSliderId = eventoCercano.id;
+
+    const datos = datosTipo(eventoCercano.tipo);
+    caja.innerHTML =
+        '<a href="' + eventoCercano.imagen + '" target="_blank" class="preview-slider-link" title="Toca para ampliar la foto">' +
+            '<img src="' + eventoCercano.imagen + '" alt="' + datos.nombre + '" class="preview-slider-img">' +
+        '</a>' +
+        '<div class="preview-slider-info">' +
+            '<span class="preview-slider-badge" style="background:' + datos.color + '">' + datos.nombre + '</span>' +
+            '<span class="preview-slider-meta">' + eventoCercano.hora + ' · ' + Number(eventoCercano.duracion).toFixed(1) + ' s</span>' +
+            '<span class="preview-slider-tip">Toca la foto para ampliar</span>' +
+        '</div>';
+    caja.style.display = "flex";
+
+    Object.keys(marcadoresEventos).forEach(id => {
+        if (Number(id) === eventoCercano.id) {
+            marcadoresEventos[id].openPopup();
+        } else {
+            marcadoresEventos[id].closePopup();
+        }
+    });
 }
 
 actualizarEventos();

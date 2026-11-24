@@ -96,8 +96,14 @@ function moverPorTiempo(indice, posicion, centrar = true) {
         document.getElementById("textoTiempo").innerHTML =
             textoBase + ' · <span id="puntajeTiempo" class="puntaje-tiempo">100/100</span>';
         actualizarAtencionHasta(registro);
+        if (typeof sincronizarEventoConSlider === "function") {
+            sincronizarEventoConSlider(registro);
+        }
     } else {
         document.getElementById("textoTiempo").textContent = textoBase;
+        if (typeof ocultarPreviewEventoSlider === "function") {
+            ocultarPreviewEventoSlider();
+        }
     }
 
     mostrarEstado(estadoVehiculo(velocidad, 0));
@@ -156,6 +162,9 @@ function volverTiempoReal() {
     mapa.removeLayer(marcadorFinHist);
     mapa.removeLayer(marcadorTiempo);
     document.getElementById("barraTiempo").style.display = "none";
+    if (typeof ocultarPreviewEventoSlider === "function") {
+        ocultarPreviewEventoSlider();
+    }
     const infoBox = document.getElementById("infoRecorridoActivo");
     if (infoBox) infoBox.style.display = "none";
     lineaRecorrido.addTo(mapa);
